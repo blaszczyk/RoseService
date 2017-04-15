@@ -2,11 +2,12 @@ package bn.blaszczyk.roseservice.model;
 
 import java.text.DateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import com.google.gson.Gson;
 import com.google.gson.internal.StringMap;
@@ -21,14 +22,6 @@ public class RoseDto extends LinkedHashMap<String, String>{
 	private static final Gson GSON = new Gson();
 	
 	private static final DateFormat DATE_FORMAT = DateFormat.getDateInstance();
-	
-	public RoseDto(final Map<?,?> anyMap)
-	{
-		for(final Map.Entry<?, ?> entry : anyMap.entrySet())
-		{
-			put(String.valueOf(entry.getKey()), String.valueOf(entry.getValue()));
-		}
-	}
 	
 	public RoseDto(final StringMap<?> stringMap)
 	{
@@ -87,17 +80,19 @@ public class RoseDto extends LinkedHashMap<String, String>{
 	
 	public Integer getEntityId(final int index)
 	{
-		return Integer.parseInt(get("e"+index));
+		final String id = get("e" + index);
+		if(id == null)
+			return -1;
+		return Integer.parseInt(id);
 	}
 	
 	public List<Integer> getEntityIds(final int index)
 	{
 		final String idsString = get("e" + index);
-		final List<?> ids = GSON.fromJson(idsString, List.class);
-		return ids.stream()
-				.map(Object::toString)
-				.map(Integer::parseInt)
-				.collect(Collectors.toList());
+		if(idsString == null)
+			return Collections.emptyList();
+		final Integer[] ids = GSON.fromJson(idsString, Integer[].class);
+		return Arrays.asList(ids);
 	}
 	
 }

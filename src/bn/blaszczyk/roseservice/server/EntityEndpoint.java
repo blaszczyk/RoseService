@@ -8,12 +8,13 @@ import javax.servlet.http.HttpServletResponse;
 
 import com.google.gson.Gson;
 
-import bn.blaszczyk.rose.model.Readable;
 import bn.blaszczyk.roseservice.RoseException;
 import bn.blaszczyk.roseservice.controller.HibernateController;
 import bn.blaszczyk.roseservice.model.RoseDto;
 
 public class EntityEndpoint implements Endpoint {
+	
+	private final static Gson GSON = new Gson();
 	
 	private final HibernateController controller;
 
@@ -32,34 +33,22 @@ public class EntityEndpoint implements Endpoint {
 		}
 		try
 		{
+			final Class<?> type = options.getType();
+			final List<RoseDto> dtos;
 			if(options.getId()<0)
-			{
-				// TODO: with query parameters
-				final List<RoseDto> dtos = controller
-						.getEntites(options.getType())
+				dtos = controller.getEntites(type)
 						.stream()
 						.map(RoseDto::new)
-						.collect(Collectors.toList());	
-				final Gson gson = new Gson();
-				response.getWriter().write(gson.toJson(dtos));
-				return HttpServletResponse.SC_OK;
-			}
+						.collect(Collectors.toList());
 			else
-			{
-				final Readable entity = controller.getEntityById(options.getType(),options.getId());
-				if(entity == null)
-				{
-					response.getWriter().write(options + " not found.");
-					return HttpServletResponse.SC_NOT_FOUND;
-				}
-				else
-				{
-					final RoseDto dto = new RoseDto(entity);
-					final Gson gson = new Gson();
-					response.getWriter().write(gson.toJson(dto));
-					return HttpServletResponse.SC_OK;
-				}
-			}
+				dtos = options.getIds()
+						.stream()
+						.map(i -> controller.getEntityById(type, i))
+						.filter(e -> e != null)
+						.map(RoseDto::new)
+						.collect(Collectors.toList());
+			response.getWriter().write(GSON.toJson(dtos));
+			return HttpServletResponse.SC_OK;
 		}
 		catch (Exception e) 
 		{

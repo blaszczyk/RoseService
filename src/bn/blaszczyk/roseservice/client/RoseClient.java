@@ -2,7 +2,8 @@ package bn.blaszczyk.roseservice.client;
 
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Scanner;
 
@@ -28,51 +29,58 @@ public class RoseClient {
 	
 	public RoseDto getDto(final String typeName, final int id)
 	{
-		webClient.replacePath("/" + typeName + "/" + id);
-		webClient.resetQuery();
-		final Response response = webClient.get();
-		final Object o = response.getEntity();
-		if(o instanceof InputStream)
-		{
-			final Scanner scanner = new Scanner((InputStream)o);
-			while (scanner.hasNextLine())
-			{
-				final String jsonResponse = scanner.nextLine();
-				final RoseDto dto = new RoseDto( GSON.fromJson(jsonResponse, LinkedHashMap.class));
-				scanner.close();
-				return dto;
-			}
-			scanner.close();
-		}
-		return null;
+		final List<RoseDto> dtos = queryDtos("/" + typeName + "/" + id);
+		return dtos.isEmpty() ? null : dtos.get(0);
 	}
 	
 	public List<RoseDto> getDtos(final String typeName)
 	{
-		webClient.replacePath("/" + typeName);
+		return queryDtos("/" + typeName);
+	}
+
+	public List<RoseDto> getDtos(String typeName, List<Integer> entityIds)
+	{
+		if(entityIds.isEmpty())
+			return Collections.emptyList();
+		return queryDtos("/" + typeName + "/" + commaSeparated(entityIds));
+	}
+	
+	private List<RoseDto> queryDtos(final String path)
+	{
+		webClient.replacePath(path);
 		webClient.resetQuery();
 		final Response response = webClient.get();
-		final Object o = response.getEntity();
-		final List<RoseDto> allDtos = new ArrayList<>();
-		if(o instanceof InputStream)
+		final Object stream = response.getEntity();
+		final List<RoseDto> dtos = new ArrayList<>();
+		if(stream instanceof InputStream)
 		{
-			final Scanner scanner = new Scanner((InputStream)o);
+			final Scanner scanner = new Scanner((InputStream)stream);
 			while (scanner.hasNextLine())
 			{
 				final String jsonResponse = scanner.nextLine();
-				final List<?> dtos = GSON.fromJson(jsonResponse, List.class);
-				for(final Object oo : dtos)
-				{
-					if(oo instanceof StringMap<?>)
-					{
-						final StringMap<?> stringMap = (StringMap<?>)oo;
-						allDtos.add(new RoseDto(stringMap));
-					}
-				}
+				final StringMap<?>[] stringMaps = GSON.fromJson(jsonResponse, StringMap[].class);
+				Arrays.stream(stringMaps)
+					.map(RoseDto::new)
+					.forEach( dto -> dtos.add(dto));
 			}
 			scanner.close();
 		}
-		return allDtos;
+		return dtos;
+	};
+	
+	private static String commaSeparated(final List<?> list)
+	{
+		boolean first = true;
+		final StringBuilder sb = new StringBuilder();
+		for(final Object o : list)
+		{
+			if(first)
+				first = false;
+			else
+				sb.append(",");
+			sb.append(o);
+		}
+		return sb.toString();
 	}
 
 }

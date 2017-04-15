@@ -1,11 +1,16 @@
 package bn.blaszczyk.roseservice.server;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import bn.blaszczyk.roseservice.tools.TypeManager;
 
 public class PathOptions
 {
 	private final Class<?> type;
 	private int id = -1;
+	private final List<Integer> ids = new ArrayList<>();
 	private boolean valid;
 	
 	public PathOptions(final String path)
@@ -16,9 +21,14 @@ public class PathOptions
 		if(options.length > 1)
 			try
 			{
-				id = Integer.parseInt(options[1].trim());
+				Arrays.stream(options[1].split("\\,"))
+						.map(String::trim)
+						.map(Integer::parseInt)
+						.forEach(i -> ids.add(i));
+				if(!ids.isEmpty())
+					id = ids.get(0);
 			}
-			catch (NumberFormatException e) 
+			catch (Exception e) 
 			{
 				valid = false;
 			}
@@ -27,6 +37,11 @@ public class PathOptions
 	public int getId()
 	{
 		return id;
+	}
+	
+	public List<Integer> getIds()
+	{
+		return ids;
 	}
 	
 	public boolean hasId()

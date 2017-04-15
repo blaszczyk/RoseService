@@ -1,16 +1,21 @@
 package bn.blaszczyk.roseservice.web;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import bn.blaszczyk.rose.model.Entity;
+import bn.blaszczyk.rose.model.EntityField;
 import bn.blaszczyk.roseservice.RoseException;
 import bn.blaszczyk.roseservice.client.RoseClient;
 import bn.blaszczyk.roseservice.model.RoseDto;
 import bn.blaszczyk.roseservice.server.Endpoint;
 import bn.blaszczyk.roseservice.server.PathOptions;
+import bn.blaszczyk.roseservice.tools.TypeManager;
 
 public class WebEndpoint implements Endpoint {
 	
@@ -30,15 +35,15 @@ public class WebEndpoint implements Endpoint {
 				if(!pathOptions.isValid())
 					return HttpServletResponse.SC_NOT_FOUND;
 				final Class<?> type = pathOptions.getType();
+				final Entity entity = TypeManager.getEntity(type);
 				if(pathOptions.hasId())
 				{
-					final RoseDto dto = client.getDto(type.getSimpleName().toLowerCase(), pathOptions.getId());
-					responseString = HtmlTools.entityView(type, dto);
+					responseString = buildEntityView(entity, pathOptions.getId());
 				}
 				else
 				{
 					final List<RoseDto> dtos = client.getDtos(type.getSimpleName().toLowerCase());
-					responseString = HtmlTools.entityList(type,dtos);
+					responseString = HtmlTools.entityList(entity,dtos);
 				}
 			}
 
@@ -48,6 +53,32 @@ public class WebEndpoint implements Endpoint {
 		catch (IOException e) {
 			return HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
 		}
+	}
+
+	private String buildEntityView(final Entity entity, final int id)
+	{
+		String responseString;
+		final RoseDto dto = client.getDto(entity.getObjectName(), id);
+		final List<List<RoseDto>> subDtos = new ArrayList<>(entity.getEntityFields().size());
+		for(int i = 0; i < entity.getEntityFields().size(); i++)
+		{
+			final EntityField field = entity.getEntityFields().get(i);
+			final String subEntityName = field.getEntity().getObjectName();
+			if(field.getType().isSecondMany())
+			{
+				subDtos.add(client.getDtos(subEntityName,dto.getEntityIds(i)));
+			}
+			else
+			{
+				final int subId = dto.getEntityId(i);
+				if(subId < 0)
+					subDtos.add(Collections.emptyList());
+				else
+					subDtos.add(Collections.singletonList(client.getDto(subEntityName, subId)));
+			}
+		}
+		responseString = HtmlTools.entityView(entity, dto,subDtos);
+		return responseString;
 	}
 
 	@Override
