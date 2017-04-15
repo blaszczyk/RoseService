@@ -14,7 +14,6 @@ import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.AbstractHandler;
 
 import bn.blaszczyk.roseservice.RoseException;
-import bn.blaszczyk.roseservice.controller.HibernateController;
 
 public class RoseHandler extends AbstractHandler {
 
@@ -27,9 +26,9 @@ public class RoseHandler extends AbstractHandler {
 	
 	private final Map<String, Endpoint> endpoints = new HashMap<>();
 	
-	public RoseHandler( final HibernateController controller )
+	public void registerEndpoint(final String path, final Endpoint endpoint)
 	{
-		endpoints.put("entity", new EntityEndpoint(controller));
+		endpoints.put(path, endpoint);
 	}
 	
 	@Override
@@ -47,32 +46,35 @@ public class RoseHandler extends AbstractHandler {
 		scanner.close();
 		
 		final Endpoint endpoint = endpoints.get(path[0]);
+		if(endpoint == null)
+		{
+			response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+			baseRequest.setHandled(true);
+			return;
+		}
 		final int responseCode;
 		final String method = request.getMethod();
+		final String subPath = path.length == 2 ? path[1] : "";
         try
         {
     		switch(method)
     		{
     		case GET:
-    			responseCode = endpoint.get(path[1], request, response);
+    			responseCode = endpoint.get(subPath, request, response);
     			break;
     		case POST:
-    			responseCode = endpoint.post(path[1], request, response);
+    			responseCode = endpoint.post(subPath, request, response);
     			break;
     		case PUT:
-    			responseCode = endpoint.put(path[1], request, response);
+    			responseCode = endpoint.put(subPath, request, response);
     			break;
     		case DELETE:
-    			responseCode = endpoint.delete(path[1], request, response);
+    			responseCode = endpoint.delete(subPath, request, response);
     			break;
    			default:
    				responseCode = HttpServletResponse.SC_BAD_REQUEST;
     		}
     		response.setStatus(responseCode);
-//    		if(path[0].contains("favicon.ico"))
-//        		Files.copy(new File("C:/Users/Michael/Desktop/Java Projects/RoseService/calculator.ico").toPath(), response.getOutputStream());
-//            else
-//            	response.getWriter().write("<h2>invalid request: " + target + "</h2>");
         }
         catch(RoseException e)
         {

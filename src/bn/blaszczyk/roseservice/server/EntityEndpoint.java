@@ -11,7 +11,7 @@ import com.google.gson.Gson;
 import bn.blaszczyk.rose.model.Readable;
 import bn.blaszczyk.roseservice.RoseException;
 import bn.blaszczyk.roseservice.controller.HibernateController;
-import bn.blaszczyk.roseservice.tools.TypeManager;
+import bn.blaszczyk.roseservice.model.RoseDto;
 
 public class EntityEndpoint implements Endpoint {
 	
@@ -87,53 +87,5 @@ public class EntityEndpoint implements Endpoint {
 		System.out.println("DELETE");
 		return HttpServletResponse.SC_NO_CONTENT;
 	}
-	
-	private static class PathOptions
-	{
-		private final Class<?> type;
-		private int id = -1;
-		private boolean valid;
-		
-		public PathOptions(final String path)
-		{
-			final String[] options = path.split("\\/");
-			type = TypeManager.getClass(options[0]);
-			valid = type != null;
-			if(options.length > 1)
-				try
-				{
-					id = Integer.parseInt(options[1].trim());
-				}
-				catch (NumberFormatException e) 
-				{
-					valid = false;
-				}
-		}
 
-		public int getId()
-		{
-			return id;
-		}
-
-		public boolean isValid()
-		{
-			return valid;
-		}
-
-		public Class<?> getType()
-		{
-			return type;
-		}
-		
-		@Override
-		public String toString()
-		{
-			if(!valid)
-				return "Invalid Path Options";
-			return type.getSimpleName() + " id=" + id;
-		}
-		
-		
-	}
-	
 }

@@ -1,7 +1,6 @@
 package bn.blaszczyk.roseservice.server;
 
 import java.io.IOException;
-import java.io.Writer;
 
 import org.eclipse.jetty.server.Server;
 
@@ -9,10 +8,9 @@ import bn.blaszczyk.roseservice.RoseException;
 
 public class RoseServer extends Server {
 
-	public void stopServer(final Writer responseWriter) throws IOException
+	public void stopServer() throws IOException
 	{
     	System.out.println("Server stop");
-    	responseWriter.write("<h1> und tschüss </h1>");
         new Thread(() -> {
         	try{
         		Thread.sleep(3000);
@@ -26,13 +24,11 @@ public class RoseServer extends Server {
         }).start();
         return;
 	}
-	
+
 	public RoseServer(final int port, final RoseHandler handler)
 	{
 		super(port);
 		setHandler(handler);
-		
-		// TODO Auto-generated constructor stub
 	}
 
 	public void startServer() throws RoseException
@@ -47,5 +43,5 @@ public class RoseServer extends Server {
 			throw new RoseException("Cannor start server " + this, e);
 		}
 	}
-	
+
 }

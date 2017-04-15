@@ -1,4 +1,4 @@
-package bn.blaszczyk.roseservice.rest;
+package bn.blaszczyk.roseservice.calculator;
 
 import java.io.File;
 import java.io.IOException;
