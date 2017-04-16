@@ -1,12 +1,15 @@
 package bn.blaszczyk.roseservice.model;
 
 import java.text.DateFormat;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import com.google.gson.Gson;
@@ -21,7 +24,12 @@ public class RoseDto extends LinkedHashMap<String, String>{
 	
 	private static final Gson GSON = new Gson();
 	
-	private static final DateFormat DATE_FORMAT = DateFormat.getDateInstance();
+	public static final DateFormat DATE_FORMAT = DateFormat.getDateInstance();
+
+	public static final DecimalFormat BIG_DEC_FORMAT = ((DecimalFormat) NumberFormat.getNumberInstance(Locale.GERMAN));
+	static{
+		BIG_DEC_FORMAT.setParseBigDecimal(true);
+	}
 	
 	public RoseDto(final StringMap<?> stringMap)
 	{
@@ -62,6 +70,7 @@ public class RoseDto extends LinkedHashMap<String, String>{
 				final List<Integer> ids = new ArrayList<>();
 				for(final Readable subEntity : entity.getEntityValueMany(i))
 					ids.add(subEntity.getId());
+				ids.sort((i1,i2) -> Integer.compare(i1, i2));
 				put("e"+i,GSON.toJson(ids));
 			}
 			else
@@ -78,12 +87,12 @@ public class RoseDto extends LinkedHashMap<String, String>{
 		return Integer.parseInt(get("id"));
 	}
 	
-	public Class<?> getType()
+	public Class<? extends Readable> getType()
 	{
 		return TypeManager.getClass(get("type"));
 	}
 	
-	public Object getFieldValue(final int index)
+	public String getFieldValue(final int index)
 	{
 		return get("f"+index);
 	}

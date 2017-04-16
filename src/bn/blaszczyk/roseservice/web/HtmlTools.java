@@ -28,6 +28,10 @@ public class HtmlTools {
 		final HtmlBuilder hb = new HtmlBuilder();
 		hb.append(linkTo("start"))
 			.h1(entity.getSimpleClassName())
+			.append("<form method=\"post\" action=\"/web/" + entity.getObjectName() + "/create\">")
+			.append(input("submit", "", "create"))
+			.append(input("hidden", "type", entity.getObjectName()))
+			.append("</form>")
 			.append(entityTable(entity, dtos));			
 		return hb.build();
 	}
@@ -63,14 +67,21 @@ public class HtmlTools {
 
 	public static String entityEdit(final Entity entity, final RoseDto dto)
 	{
+		final String path = "/web/" + entity.getObjectName() + "/" + dto.getId();
 		final HtmlBuilder hb = new HtmlBuilder();
 		hb.h1(entity.getSimpleClassName() + " id=" + dto.getId())
-			.append("<form method=\"post\">")
+			.append("<form method=\"post\" action=\"")
+			.append(path)
+			.append("/update\">")
 			.append(input("hidden", "id", dto.getId()))
 			.append(input("hidden", "type", dto.getType().getSimpleName()))
 			.append(primitivesInputTable(entity, dto))
 			.append(entitiesInputTable(entity, dto))
 			.append(input("submit","", "Save"))
+			.append("</form><form method=\"post\" action=\"")
+			.append(path)
+			.append("/delete\">")
+			.append(input("submit", "", "Delete"))
 			.append("</form>");
 		return hb.build();
 	}

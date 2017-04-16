@@ -51,7 +51,7 @@ public final class EntityUtils {
 		return builder.toString();
 	}
 	
-	public static boolean equals(Identifyable i1, Identifyable i2)
+	public static boolean equals(Readable i1, Readable i2)
 	{
 		if(i1 == i2)
 			return true;

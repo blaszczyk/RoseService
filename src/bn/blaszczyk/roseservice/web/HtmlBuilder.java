@@ -11,7 +11,7 @@ public class HtmlBuilder {
 		sb = new StringBuilder("<html><body>");
 	}
 	
-	public HtmlBuilder append(final String text)
+	public HtmlBuilder append(final Object text)
 	{
 		sb.append(text);
 		return this;

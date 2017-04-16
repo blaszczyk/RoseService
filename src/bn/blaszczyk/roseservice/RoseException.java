@@ -4,17 +4,17 @@ public class RoseException extends Exception {
 
 	private static final long serialVersionUID = 8175985689822621690L;
 
-	public RoseException(String message)
+	public RoseException(final String message)
 	{
 		super(message);
 	}
 	
-	public RoseException(Throwable cause)
+	public RoseException(final Throwable cause)
 	{
 		super(cause);
 	}
 	
-	public RoseException(String message, Throwable cause)
+	public RoseException(final String message, final Throwable cause)
 	{
 		super(message, cause);
 	}
@@ -29,6 +29,13 @@ public class RoseException extends Exception {
 			cause = cause.getCause();
 		}
 		return sb.toString();
+	}
+
+	public static RoseException wrap(final Exception cause, final String message)
+	{
+		if(cause instanceof RoseException)
+			return (RoseException)cause;
+		return new RoseException(message, cause);
 	}
 	
 }

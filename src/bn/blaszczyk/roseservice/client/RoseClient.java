@@ -41,12 +41,32 @@ public class RoseClient {
 		return queryDtos("/" + typeName + "/" + commaSeparated(entityIds));
 	}
 
+	public RoseDto postDto(final RoseDto dto)
+	{
+		final String path = "/" + dto.getType().getSimpleName().toLowerCase();
+		webClient.replacePath(path);
+		webClient.resetQuery();
+		final String response = webClient.post(GSON.toJson(dto),String.class);
+		final StringMap<?> stringMap = GSON.fromJson(response, StringMap.class);
+		return new RoseDto(stringMap);
+		//TODO: handle error
+	}
+
 	public void putDto(final RoseDto dto)
 	{
 		final String path = "/" + dto.getType().getSimpleName().toLowerCase() + "/" + dto.getId();
 		webClient.replacePath(path);
 		webClient.resetQuery();
 		webClient.put(GSON.toJson(dto));
+		//TODO: handle error
+	}
+
+	public void deleteByID(final String typeName, final int id)
+	{
+		final String path = "/" + typeName + "/" + id;
+		webClient.replacePath(path);
+		webClient.resetQuery();
+		webClient.delete();
 		//TODO: handle error
 	}
 

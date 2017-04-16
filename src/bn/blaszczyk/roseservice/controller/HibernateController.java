@@ -388,11 +388,11 @@ public class HibernateController {
 			entities.clear();
 	}
 
-	public Readable getEntityById(Class<?> type, int id)
+	public Readable getEntityById(final Class<?> type, int id)
 	{
 		final Criteria criteria = getSession().createCriteria(type);
 		criteria.add(Restrictions.idEq(id));
-		List<?> entities = criteria.list();
+		final List<?> entities = criteria.list();
 		if(entities.size() != 1)
 			return null;
 		return (Readable) entities.get(0);

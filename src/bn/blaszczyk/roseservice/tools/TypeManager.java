@@ -71,7 +71,7 @@ public class TypeManager {
 		}
 	}
 	
-	public static Entity getEntity(Class<?> type)
+	public static Entity getEntity(Class<? extends Readable> type)
 	{
 		return getEntity(convertType(type).getSimpleName());
 	}
@@ -81,7 +81,7 @@ public class TypeManager {
 		return entites.get(name);
 	}
 	
-	public static Entity getEntity( Identifyable entity )
+	public static Entity getEntity( Readable entity )
 	{
 		if(entity == null)
 			return null;
@@ -90,7 +90,7 @@ public class TypeManager {
 	
 	public static EnumType getEnum( Class<?> type )
 	{
-		return enums.get(convertType(type).getSimpleName());
+		return enums.get(type.getSimpleName());
 	}
 	
 	public static EnumType getEnum( Enum<?> enumOption )
@@ -130,14 +130,14 @@ public class TypeManager {
 		return entites.size();
 	}
 
-	public static Class<?> getClass(String entityName)
+	public static Class<? extends Readable> getClass(String entityName)
 	{
 		return entityClasses.get(entityName.toLowerCase());
 	}
 
-	public static Class<?> convertType(Class<?> type)
+	public static Class<? extends Readable> convertType(Class<? extends Readable> type)
 	{
-		for(Class<?> t : entityClasses.values())
+		for(Class<? extends Readable> t : entityClasses.values())
 			if(t.isAssignableFrom(type))
 				return t;
 		LOGGER.error("unknown type: " + type.getName());

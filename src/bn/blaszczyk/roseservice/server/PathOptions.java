@@ -5,13 +5,14 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import bn.blaszczyk.rose.model.Readable;
 import bn.blaszczyk.roseservice.tools.TypeManager;
 
 public class PathOptions
 {
 	private static final Pattern COMMA_SEPARATED_INTS = Pattern.compile("^[0-9]+(\\,[0-9]+)*$");
 	
-	private final Class<?> type;
+	private final Class<? extends Readable> type;
 	private int id = -1;
 	private final List<Integer> ids = new ArrayList<>();
 	private boolean valid;
@@ -62,7 +63,7 @@ public class PathOptions
 		return valid;
 	}
 
-	public Class<?> getType()
+	public Class<? extends Readable> getType()
 	{
 		return type;
 	}

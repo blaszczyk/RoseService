@@ -8,6 +8,7 @@ import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import bn.blaszczyk.rose.model.Readable;
 import bn.blaszczyk.rose.model.Entity;
 import bn.blaszczyk.rose.model.EntityField;
 import bn.blaszczyk.roseservice.RoseException;
@@ -34,7 +35,7 @@ public class WebEndpoint implements Endpoint {
 				final PathOptions pathOptions = new PathOptions(path);
 				if(!pathOptions.isValid())
 					return HttpServletResponse.SC_NOT_FOUND;
-				final Class<?> type = pathOptions.getType();
+				final Class<? extends Readable> type = pathOptions.getType();
 				final Entity entity = TypeManager.getEntity(type);
 				if(pathOptions.hasId())
 					if(pathOptions.hasOptions() && pathOptions.getOptions()[0].equals("update"))
@@ -64,15 +65,18 @@ public class WebEndpoint implements Endpoint {
 			switch (pathOptions.getOptions()[0])
 			{
 			case "update":
-				final RoseDto dto = new RoseDto(request.getParameterMap());
-				client.putDto(dto);
-				responseString = this.buildEntityView(TypeManager.getEntity(dto.getType()), dto.getId());
+				final RoseDto updateDto = new RoseDto(request.getParameterMap());
+				client.putDto(updateDto);
+				responseString = buildEntityView(TypeManager.getEntity(updateDto.getType()), updateDto.getId());
 				break;
 			case "create":
-				// ...
+				RoseDto createDto = new RoseDto(request.getParameterMap());
+				createDto = client.postDto(createDto);
+				responseString = buildEntityEdit(TypeManager.getEntity(createDto.getType()), createDto.getId());
 				break;
 			case "delete":
-				// ...
+				client.deleteByID(pathOptions.getType().getSimpleName().toLowerCase(), pathOptions.getId());
+				responseString = buildEntitiesList(TypeManager.getEntity(pathOptions.getType()));
 				break;
 			default:
 				return HttpServletResponse.SC_NOT_FOUND;
