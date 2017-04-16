@@ -31,6 +31,16 @@ public class RoseDto extends LinkedHashMap<String, String>{
 		}
 	}
 	
+	public RoseDto(final Map<String, String[]> parameterMap)
+	{
+		for(final Map.Entry<String, String[]> entry : parameterMap.entrySet())
+		{
+			final String[] values = entry.getValue();
+			if(values.length == 1)
+				put(entry.getKey(), values[0]);
+		}
+	}
+	
 	public RoseDto(final Readable entity)
 	{
 		put("type",entity.getEntityName());
@@ -62,7 +72,7 @@ public class RoseDto extends LinkedHashMap<String, String>{
 			}
 		}
 	}
-	
+
 	public int getId()
 	{
 		return Integer.parseInt(get("id"));

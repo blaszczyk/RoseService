@@ -3,7 +3,6 @@ package bn.blaszczyk.roseservice.server;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Scanner;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -14,6 +13,7 @@ import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.AbstractHandler;
 
 import bn.blaszczyk.roseservice.RoseException;
+import bn.blaszczyk.roseservice.web.HtmlBuilder;
 
 public class RoseHandler extends AbstractHandler {
 
@@ -35,16 +35,9 @@ public class RoseHandler extends AbstractHandler {
 	public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response)
 			throws IOException, ServletException
 	{
-		LOGGER.info("getting request at " + target);
+		final String logContext = request.getMethod() + " at " + target + " from " + request.getRemoteHost();
+		LOGGER.info("request: " + logContext);
 		final String[] path = target.substring(1).split("\\/",2);
-		
-		Scanner scanner = new Scanner(request.getInputStream());
-		while (scanner.hasNextLine())
-		{
-			System.out.println("req: " + scanner.nextLine());
-		}
-		scanner.close();
-		
 		final Endpoint endpoint = endpoints.get(path[0]);
 		if(endpoint == null)
 		{
@@ -79,13 +72,13 @@ public class RoseHandler extends AbstractHandler {
         catch(RoseException e)
         {
         	response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-        	response.getWriter().write("<h2>error</h2>");
-        	e.printStackTrace(response.getWriter());
-        	e.printStackTrace();
+        	response.getWriter().write(new HtmlBuilder().h2("internal server error").append(e.getFullMessage()).build());
+        	LOGGER.error("internal server error", e);
         }
         finally
         {
         	baseRequest.setHandled(true);
+        	LOGGER.debug("request handled: " + logContext);
         }
 	}
 	

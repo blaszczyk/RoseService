@@ -1,13 +1,9 @@
 package bn.blaszczyk.roseservice.client;
 
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Scanner;
-
-import javax.ws.rs.core.Response;
 
 import org.apache.cxf.jaxrs.client.WebClient;
 
@@ -38,35 +34,34 @@ public class RoseClient {
 		return queryDtos("/" + typeName);
 	}
 
-	public List<RoseDto> getDtos(String typeName, List<Integer> entityIds)
+	public List<RoseDto> getDtos(final String typeName, final List<Integer> entityIds)
 	{
 		if(entityIds.isEmpty())
 			return Collections.emptyList();
 		return queryDtos("/" + typeName + "/" + commaSeparated(entityIds));
 	}
-	
+
+	public void putDto(final RoseDto dto)
+	{
+		final String path = "/" + dto.getType().getSimpleName().toLowerCase() + "/" + dto.getId();
+		webClient.replacePath(path);
+		webClient.resetQuery();
+		webClient.put(GSON.toJson(dto));
+		//TODO: handle error
+	}
+
 	private List<RoseDto> queryDtos(final String path)
 	{
 		webClient.replacePath(path);
 		webClient.resetQuery();
-		final Response response = webClient.get();
-		final Object stream = response.getEntity();
 		final List<RoseDto> dtos = new ArrayList<>();
-		if(stream instanceof InputStream)
-		{
-			final Scanner scanner = new Scanner((InputStream)stream);
-			while (scanner.hasNextLine())
-			{
-				final String jsonResponse = scanner.nextLine();
-				final StringMap<?>[] stringMaps = GSON.fromJson(jsonResponse, StringMap[].class);
-				Arrays.stream(stringMaps)
-					.map(RoseDto::new)
-					.forEach( dto -> dtos.add(dto));
-			}
-			scanner.close();
-		}
+		final String response = webClient.get(String.class);
+		final StringMap<?>[] stringMaps = GSON.fromJson(response, StringMap[].class);
+		Arrays.stream(stringMaps)
+			.map(RoseDto::new)
+			.forEach( dto -> dtos.add(dto));
 		return dtos;
-	};
+	}
 	
 	private static String commaSeparated(final List<?> list)
 	{

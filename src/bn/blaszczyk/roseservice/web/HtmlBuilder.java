@@ -17,7 +17,7 @@ public class HtmlBuilder {
 		return this;
 	}
 	
-	public HtmlBuilder header(final String text)
+	public HtmlBuilder h1(final String text)
 	{
 		sb.append("<h1>")
 			.append(text)
@@ -25,8 +25,15 @@ public class HtmlBuilder {
 		return this;
 	}
 	
-	@Override
-	public String toString()
+	public HtmlBuilder h2(final String text)
+	{
+		sb.append("<h2>")
+			.append(text)
+			.append("</h2>");
+		return this;
+	}
+	
+	public String build()
 	{
 		if(evaluated)
 			throw new IllegalStateException("HtmlBuilder.toString must only be invoked once.");

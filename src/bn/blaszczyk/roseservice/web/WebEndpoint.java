@@ -37,22 +37,78 @@ public class WebEndpoint implements Endpoint {
 				final Class<?> type = pathOptions.getType();
 				final Entity entity = TypeManager.getEntity(type);
 				if(pathOptions.hasId())
-				{
-					responseString = buildEntityView(entity, pathOptions.getId());
-				}
+					if(pathOptions.hasOptions() && pathOptions.getOptions()[0].equals("update"))
+						responseString = buildEntityEdit(entity, pathOptions.getId());
+					else
+						responseString = buildEntityView(entity, pathOptions.getId());
 				else
-				{
-					final List<RoseDto> dtos = client.getDtos(type.getSimpleName().toLowerCase());
-					responseString = HtmlTools.entityList(entity,dtos);
-				}
+					responseString = buildEntitiesList(entity);
 			}
-
 			response.getWriter().write(responseString);
 			return HttpServletResponse.SC_OK;
 		}
 		catch (IOException e) {
 			return HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
 		}
+	}
+	
+	@Override
+	public int post(final String path, final HttpServletRequest request, final HttpServletResponse response) throws RoseException
+	{
+		final PathOptions pathOptions = new PathOptions(path);
+		if(!pathOptions.isValid() || !pathOptions.hasOptions())
+			return HttpServletResponse.SC_NOT_FOUND;
+		try
+		{
+			String responseString = "";
+			switch (pathOptions.getOptions()[0])
+			{
+			case "update":
+				final RoseDto dto = new RoseDto(request.getParameterMap());
+				client.putDto(dto);
+				responseString = this.buildEntityView(TypeManager.getEntity(dto.getType()), dto.getId());
+				break;
+			case "create":
+				// ...
+				break;
+			case "delete":
+				// ...
+				break;
+			default:
+				return HttpServletResponse.SC_NOT_FOUND;
+			}
+			response.getWriter().write(responseString);
+			return HttpServletResponse.SC_OK;
+		}
+		catch (Exception e) 
+		{
+			// TODO: handle
+			return HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
+		}
+	}
+	
+	@Override
+	public int put(final String path, final HttpServletRequest request, final HttpServletResponse response) throws RoseException
+	{
+		return HttpServletResponse.SC_BAD_REQUEST;
+	}
+	
+	@Override
+	public int delete(final String path, final HttpServletRequest request, final HttpServletResponse response) throws RoseException
+	{
+		return HttpServletResponse.SC_BAD_REQUEST;
+	}
+	
+	private String buildEntitiesList(final Entity entity)
+	{
+		final List<RoseDto> dtos = client.getDtos(entity.getObjectName());
+		return HtmlTools.entityList(entity,dtos);
+	}
+
+	private String buildEntityEdit(final Entity entity, final int id)
+	{
+		final RoseDto dto = client.getDto(entity.getObjectName(), id);
+		return HtmlTools.entityEdit(entity, dto);
 	}
 
 	private String buildEntityView(final Entity entity, final int id)
@@ -81,22 +137,4 @@ public class WebEndpoint implements Endpoint {
 		return responseString;
 	}
 
-	@Override
-	public int post(String path, HttpServletRequest request, HttpServletResponse response) throws RoseException
-	{
-		return HttpServletResponse.SC_OK;
-	}
-	
-	@Override
-	public int put(String path, HttpServletRequest request, HttpServletResponse response) throws RoseException
-	{
-		return HttpServletResponse.SC_OK;
-	}
-	
-	@Override
-	public int delete(String path, HttpServletRequest request, HttpServletResponse response) throws RoseException
-	{
-		return HttpServletResponse.SC_OK;
-	}
-	
 }
