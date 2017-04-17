@@ -11,11 +11,6 @@ import bn.blaszczyk.roseservice.web.WebEndpoint;
 
 public class Launcher {
 	
-	public Launcher()
-	{
-		// TODO Auto-generated constructor stub
-	}
-	
 	public static void main(String[] args)
 	{
 		if(args.length == 0)
@@ -31,7 +26,7 @@ public class Launcher {
 		final RoseServer server = new RoseServer(4053, handler);
 
 		try
-		{
+		 {
 			for(Class<?> type : TypeManager.getEntityClasses())
 				controller.loadEntities(type);
 			server.startServer();

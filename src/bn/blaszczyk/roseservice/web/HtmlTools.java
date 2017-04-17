@@ -70,6 +70,7 @@ public class HtmlTools {
 		final String path = "/web/" + entity.getObjectName() + "/" + dto.getId();
 		final HtmlBuilder hb = new HtmlBuilder();
 		hb.h1(entity.getSimpleClassName() + " id=" + dto.getId())
+			.append(linkTo("Cancel", entity.getObjectName(), dto.getId()))
 			.append("<form method=\"post\" action=\"")
 			.append(path)
 			.append("/update\">")

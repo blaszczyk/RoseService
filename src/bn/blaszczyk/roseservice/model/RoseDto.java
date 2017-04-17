@@ -9,43 +9,44 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import com.google.gson.Gson;
 import com.google.gson.internal.StringMap;
 
 import bn.blaszczyk.rose.model.Readable;
+import bn.blaszczyk.roseservice.RoseException;
 import bn.blaszczyk.roseservice.tools.TypeManager;
 
 public class RoseDto extends LinkedHashMap<String, String>{
 	
 	private static final long serialVersionUID = 7851913867785528671L;
 	
-	private static final Gson GSON = new Gson();
-	
 	public static final DateFormat DATE_FORMAT = DateFormat.getDateInstance();
-
-	public static final DecimalFormat BIG_DEC_FORMAT = ((DecimalFormat) NumberFormat.getNumberInstance(Locale.GERMAN));
+	public static final DecimalFormat BIG_DEC_FORMAT = (DecimalFormat) NumberFormat.getNumberInstance();
 	static{
 		BIG_DEC_FORMAT.setParseBigDecimal(true);
 	}
+
+	private static final Gson GSON = new Gson();	
+	private static final Pattern ID_PATTERN = Pattern.compile("^[0-9]*$");
 	
-	public RoseDto(final StringMap<?> stringMap)
+	public RoseDto(final StringMap<?> stringMap) throws RoseException
 	{
 		for(final Map.Entry<String, ?> entry : stringMap.entrySet())
 		{
+			checkEntry(entry);
 			put(entry.getKey(), String.valueOf(entry.getValue()));
 		}
 	}
-	
-	public RoseDto(final Map<String, String[]> parameterMap)
+
+	public RoseDto(final Map<String, String[]> parameterMap) throws RoseException
 	{
 		for(final Map.Entry<String, String[]> entry : parameterMap.entrySet())
 		{
-			final String[] values = entry.getValue();
-			if(values.length == 1)
-				put(entry.getKey(), values[0]);
+			checkArrayEntry(entry);
+			put(entry.getKey(), entry.getValue()[0]);
 		}
 	}
 	
@@ -112,6 +113,39 @@ public class RoseDto extends LinkedHashMap<String, String>{
 			return Collections.emptyList();
 		final Integer[] ids = GSON.fromJson(idsString, Integer[].class);
 		return Arrays.asList(ids);
+	}
+	
+	private void checkArrayEntry(final Map.Entry<String, String[]> entry) throws RoseException
+	{
+		final String[] value = entry.getValue();
+		if(value.length != 1)
+			throw new RoseException("array value " + entry.getKey() + "=" + value + " has no unique element");
+		checkEntry(entry.getKey(), value[0]);
+	}
+
+	private void checkEntry(final Map.Entry<String, ?> entry) throws RoseException
+	{
+		checkEntry(entry.getKey(), String.valueOf(entry.getValue()));
+	}
+	
+	private void checkEntry(final String key, final String value) throws RoseException
+	{
+		if(key.equals("id"))
+		{
+			if(! ID_PATTERN.matcher(String.valueOf(value)).matches())
+				throw new RoseException("");
+			return;
+		}
+		else if(key.equals("type"))
+		{
+			if( TypeManager.getClass(value) == null)
+				throw new RoseException("unknown type '" + value + "'");
+			return;
+		}
+		else if(key.startsWith("e") || key.startsWith("f"))
+			if(key.length() > 1 && ID_PATTERN.matcher(key.substring(1)).matches())
+				return;
+		throw new RoseException("unknown key '" + key + "'");
 	}
 	
 }

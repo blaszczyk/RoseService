@@ -48,38 +48,38 @@ public class RoseHandler extends AbstractHandler {
 		final int responseCode;
 		final String method = request.getMethod();
 		final String subPath = path.length == 2 ? path[1] : "";
-        try
-        {
-    		switch(method)
-    		{
-    		case GET:
-    			responseCode = endpoint.get(subPath, request, response);
-    			break;
-    		case POST:
-    			responseCode = endpoint.post(subPath, request, response);
-    			break;
-    		case PUT:
-    			responseCode = endpoint.put(subPath, request, response);
-    			break;
-    		case DELETE:
-    			responseCode = endpoint.delete(subPath, request, response);
-    			break;
-   			default:
-   				responseCode = HttpServletResponse.SC_BAD_REQUEST;
-    		}
-    		response.setStatus(responseCode);
-        }
-        catch(RoseException e)
-        {
-        	response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-        	response.getWriter().write(new HtmlBuilder().h2("internal server error").append(e.getFullMessage()).build());
-        	LOGGER.error("internal server error", e);
-        }
-        finally
-        {
-        	baseRequest.setHandled(true);
-        	LOGGER.debug("request handled: " + logContext);
-        }
+		try
+		{
+			switch(method)
+			{
+			case GET:
+				responseCode = endpoint.get(subPath, request, response);
+				break;
+			case POST:
+				responseCode = endpoint.post(subPath, request, response);
+				break;
+			case PUT:
+				responseCode = endpoint.put(subPath, request, response);
+				break;
+			case DELETE:
+				responseCode = endpoint.delete(subPath, request, response);
+				break;
+			default:
+				responseCode = HttpServletResponse.SC_BAD_REQUEST;
+			}
+			response.setStatus(responseCode);
+		}
+		catch(RoseException e)
+		{
+			response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+			response.getWriter().write(new HtmlBuilder().h2("internal server error").append(e.getFullMessage()).build());
+			LOGGER.error("internal server error", e);
+		}
+		finally
+		{
+			baseRequest.setHandled(true);
+			LOGGER.debug("request handled: " + logContext);
+		}
 	}
 	
 }

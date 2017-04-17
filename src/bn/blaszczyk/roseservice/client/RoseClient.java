@@ -1,7 +1,6 @@
 package bn.blaszczyk.roseservice.client;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -10,6 +9,7 @@ import org.apache.cxf.jaxrs.client.WebClient;
 import com.google.gson.Gson;
 import com.google.gson.internal.StringMap;
 
+import bn.blaszczyk.roseservice.RoseException;
 import bn.blaszczyk.roseservice.model.RoseDto;
 
 public class RoseClient {
@@ -23,64 +23,107 @@ public class RoseClient {
 		webClient = WebClient.create("http://localhost:4053/entity");
 	}
 	
-	public RoseDto getDto(final String typeName, final int id)
+	public RoseDto getDto(final String typeName, final int id) throws RoseException
 	{
 		final List<RoseDto> dtos = queryDtos("/" + typeName + "/" + id);
-		return dtos.isEmpty() ? null : dtos.get(0);
+		if(dtos.size() != 1)
+			throw new RoseException("error on GET@/" + typeName + "/" + id + "; found:" + dtos);
+		return dtos.get(0);
 	}
 	
-	public List<RoseDto> getDtos(final String typeName)
+	public List<RoseDto> getDtos(final String typeName) throws RoseException
 	{
 		return queryDtos("/" + typeName);
 	}
 
-	public List<RoseDto> getDtos(final String typeName, final List<Integer> entityIds)
+	public List<RoseDto> getDtos(final String typeName, final List<Integer> entityIds) throws RoseException
 	{
 		if(entityIds.isEmpty())
 			return Collections.emptyList();
 		return queryDtos("/" + typeName + "/" + commaSeparated(entityIds));
 	}
 
-	public RoseDto postDto(final RoseDto dto)
+	public RoseDto postDto(final RoseDto dto) throws RoseException
 	{
-		final String path = "/" + dto.getType().getSimpleName().toLowerCase();
-		webClient.replacePath(path);
-		webClient.resetQuery();
-		final String response = webClient.post(GSON.toJson(dto),String.class);
-		final StringMap<?> stringMap = GSON.fromJson(response, StringMap.class);
-		return new RoseDto(stringMap);
-		//TODO: handle error
+		final String path = pathForType(dto);
+		try
+		{
+			webClient.replacePath(path);
+			webClient.resetQuery();
+			final String response = webClient.post(GSON.toJson(dto),String.class);
+			final StringMap<?> stringMap = GSON.fromJson(response, StringMap.class);
+			return new RoseDto(stringMap);
+		}
+		catch(Exception e)
+		{
+			throw RoseException.wrap(e, "error on POST@" + path);
+		}
 	}
 
-	public void putDto(final RoseDto dto)
+	public void putDto(final RoseDto dto) throws RoseException
 	{
-		final String path = "/" + dto.getType().getSimpleName().toLowerCase() + "/" + dto.getId();
-		webClient.replacePath(path);
-		webClient.resetQuery();
-		webClient.put(GSON.toJson(dto));
-		//TODO: handle error
+		final String path = pathFor(dto);
+		try
+		{
+			webClient.replacePath(path);
+			webClient.resetQuery();
+			webClient.put(GSON.toJson(dto));
+		}
+		catch (Exception e) 
+		{
+			throw RoseException.wrap(e, "error on PUT@" + path);
+		}
 	}
 
-	public void deleteByID(final String typeName, final int id)
+	public void deleteByID(final String typeName, final int id) throws RoseException
 	{
 		final String path = "/" + typeName + "/" + id;
-		webClient.replacePath(path);
-		webClient.resetQuery();
-		webClient.delete();
-		//TODO: handle error
+
+		try
+		{
+			webClient.replacePath(path);
+			webClient.resetQuery();
+			webClient.delete();
+		}
+		catch (Exception e) 
+		{
+			throw RoseException.wrap(e, "error on DELETE@" + path);
+		}
+	}
+	
+	private String pathForType(final RoseDto dto) throws RoseException
+	{
+		final Class<?> type = dto.getType();
+		if(type == null)
+			throw new RoseException("missing type in " + dto);
+		return "/" + type.getSimpleName().toLowerCase();
+	}
+	
+	private String pathFor(final RoseDto dto) throws RoseException
+	{
+		final int id = dto.getId();
+		if(id < 0)
+			throw new RoseException("invalie id " + id);
+		return pathForType(dto) + "/" + id;
 	}
 
-	private List<RoseDto> queryDtos(final String path)
+	private List<RoseDto> queryDtos(final String path) throws RoseException
 	{
-		webClient.replacePath(path);
-		webClient.resetQuery();
-		final List<RoseDto> dtos = new ArrayList<>();
-		final String response = webClient.get(String.class);
-		final StringMap<?>[] stringMaps = GSON.fromJson(response, StringMap[].class);
-		Arrays.stream(stringMaps)
-			.map(RoseDto::new)
-			.forEach( dto -> dtos.add(dto));
-		return dtos;
+		try
+		{
+			webClient.replacePath(path);
+			webClient.resetQuery();
+			final List<RoseDto> dtos = new ArrayList<>();
+			final String response = webClient.get(String.class);
+			final StringMap<?>[] stringMaps = GSON.fromJson(response, StringMap[].class);
+			for(StringMap<?> stringMap : stringMaps)
+				dtos.add(new RoseDto(stringMap));
+			return dtos;
+		}
+		catch (Exception e) 
+		{
+			throw RoseException.wrap(e, "Error on GET@" + path);
+		}
 	}
 	
 	private static String commaSeparated(final List<?> list)

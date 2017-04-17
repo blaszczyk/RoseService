@@ -86,8 +86,7 @@ public class WebEndpoint implements Endpoint {
 		}
 		catch (Exception e) 
 		{
-			// TODO: handle
-			return HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
+			throw RoseException.wrap(e, "error on POST@" + path);
 		}
 	}
 	
@@ -103,19 +102,19 @@ public class WebEndpoint implements Endpoint {
 		return HttpServletResponse.SC_BAD_REQUEST;
 	}
 	
-	private String buildEntitiesList(final Entity entity)
+	private String buildEntitiesList(final Entity entity) throws RoseException
 	{
 		final List<RoseDto> dtos = client.getDtos(entity.getObjectName());
 		return HtmlTools.entityList(entity,dtos);
 	}
 
-	private String buildEntityEdit(final Entity entity, final int id)
+	private String buildEntityEdit(final Entity entity, final int id) throws RoseException
 	{
 		final RoseDto dto = client.getDto(entity.getObjectName(), id);
 		return HtmlTools.entityEdit(entity, dto);
 	}
 
-	private String buildEntityView(final Entity entity, final int id)
+	private String buildEntityView(final Entity entity, final int id) throws RoseException
 	{
 		String responseString;
 		final RoseDto dto = client.getDto(entity.getObjectName(), id);

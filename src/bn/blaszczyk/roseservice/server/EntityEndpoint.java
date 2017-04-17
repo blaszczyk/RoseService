@@ -1,5 +1,6 @@
 package bn.blaszczyk.roseservice.server;
 
+import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -8,6 +9,8 @@ import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import org.apache.log4j.Logger;
 
 import com.google.gson.Gson;
 import com.google.gson.internal.StringMap;
@@ -26,7 +29,9 @@ import bn.blaszczyk.roseservice.tools.TypeManager;
 
 public class EntityEndpoint implements Endpoint {
 	
-	private final static Gson GSON = new Gson();
+	private static final Logger LOGGER = Logger.getLogger(EntityEndpoint.class);
+	
+	private static final Gson GSON = new Gson();
 	
 	private final HibernateController controller;
 
@@ -76,6 +81,7 @@ public class EntityEndpoint implements Endpoint {
 				return HttpServletResponse.SC_NOT_FOUND;
 			final StringMap<?> stringMap = GSON.fromJson(request.getReader(), StringMap.class);
 			final RoseDto dto = new RoseDto(stringMap);
+			LOGGER.debug("posting dto " + dto );
 			if(!pathOptions.getType().equals(dto.getType()))
 				return HttpServletResponse.SC_BAD_REQUEST;
 			final Writable entity = (Writable) controller.createNew(dto.getType());
@@ -99,6 +105,7 @@ public class EntityEndpoint implements Endpoint {
 				return HttpServletResponse.SC_NOT_FOUND;
 			final StringMap<?> stringMap = GSON.fromJson(request.getReader(), StringMap.class);
 			final RoseDto dto = new RoseDto(stringMap);
+			LOGGER.debug("putting dto " + dto);
 			if(pathOptions.getId() != dto.getId() || !pathOptions.getType().equals(dto.getType()))
 				return HttpServletResponse.SC_BAD_REQUEST;
 			final Writable entity = (Writable) controller.getEntityById(dto.getType(), dto.getId());
@@ -161,7 +168,7 @@ public class EntityEndpoint implements Endpoint {
 	
 	private Object getPrimitiveValue(final Field field, final String dtoValue) throws RoseException
 	{
-		if(dtoValue == "null")
+		if(dtoValue == null || dtoValue.equals("null"))
 			return null;
 		try
 		{
@@ -174,7 +181,8 @@ public class EntityEndpoint implements Endpoint {
 			}
 			else if(field instanceof PrimitiveField)
 			{
-				switch(((PrimitiveField) field).getType())
+				final PrimitiveField pField = (PrimitiveField) field;
+				switch(pField.getType())
 				{
 				case BOOLEAN:
 					return Boolean.parseBoolean(dtoValue);
@@ -183,9 +191,12 @@ public class EntityEndpoint implements Endpoint {
 				case INT:
 					return Integer.parseInt(dtoValue);
 				case NUMERIC:
-					return RoseDto.BIG_DEC_FORMAT.parse(dtoValue);
+					final BigDecimal numValue = (BigDecimal) RoseDto.BIG_DEC_FORMAT.parse(dtoValue);
+					checkNumeric(numValue,pField);
+					return numValue;
 				case CHAR:
 				case VARCHAR:
+					checkString(dtoValue,pField);
 					return dtoValue;
 				}
 			}
@@ -229,6 +240,23 @@ public class EntityEndpoint implements Endpoint {
 			entity.addEntity(index, subEntity);
 			controller.update(subEntity);
 		}
+	}
+
+	private void checkNumeric(final BigDecimal value, final PrimitiveField field) throws RoseException
+	{
+		final int precision = field.getLength1();
+		final int scale = field.getLength2();
+		if(value.scale() > scale)
+			throw new RoseException("numeric value " + field.getName() + "=" + value + " has wrong scale; max scale=" + scale);
+		if(value.precision() > precision)
+			throw new RoseException("numeric value " + field.getName() + "=" + value + " has wrong precision; max precision=" + precision);
+	}
+
+	private void checkString(final String value, final PrimitiveField field) throws RoseException
+	{
+		final int length = field.getLength1();
+		if(value.length() > length)
+			throw new RoseException("string value " + field.getName() + "='" + value + "' too long; max_length=" + length);
 	}
 
 }
