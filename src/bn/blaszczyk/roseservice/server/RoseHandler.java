@@ -81,5 +81,13 @@ public class RoseHandler extends AbstractHandler {
 			LOGGER.debug("request handled: " + logContext);
 		}
 	}
+
+	public Map<String, String> getStatus()
+	{
+		final Map<String,String> status = new HashMap<>();
+		for(final Endpoint endpoint : endpoints.values())
+			status.putAll(endpoint.status());
+		return status;
+	}
 	
 }

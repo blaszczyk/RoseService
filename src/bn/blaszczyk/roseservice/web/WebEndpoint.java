@@ -3,7 +3,9 @@ package bn.blaszczyk.roseservice.web;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -30,6 +32,8 @@ public class WebEndpoint implements Endpoint {
 			String responseString = "";
 			if(path.equals(""))
 				responseString = HtmlTools.startPage();
+			else if(path.equals("server"))
+				responseString = buildServerControls();
 			else
 			{
 				final PathOptions pathOptions = new PathOptions(path);
@@ -52,7 +56,7 @@ public class WebEndpoint implements Endpoint {
 			return HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
 		}
 	}
-	
+
 	@Override
 	public int post(final String path, final HttpServletRequest request, final HttpServletResponse response) throws RoseException
 	{
@@ -102,6 +106,14 @@ public class WebEndpoint implements Endpoint {
 		return HttpServletResponse.SC_BAD_REQUEST;
 	}
 	
+	@Override
+	public Map<String, String> status()
+	{
+		final Map<String,String> status = new HashMap<>();
+		status.put("endpoint /web", "active");
+		return status;
+	}
+	
 	private String buildEntitiesList(final Entity entity) throws RoseException
 	{
 		final List<RoseDto> dtos = client.getDtos(entity.getObjectName());
@@ -116,7 +128,6 @@ public class WebEndpoint implements Endpoint {
 
 	private String buildEntityView(final Entity entity, final int id) throws RoseException
 	{
-		String responseString;
 		final RoseDto dto = client.getDto(entity.getObjectName(), id);
 		final List<List<RoseDto>> subDtos = new ArrayList<>(entity.getEntityFields().size());
 		for(int i = 0; i < entity.getEntityFields().size(); i++)
@@ -136,8 +147,13 @@ public class WebEndpoint implements Endpoint {
 					subDtos.add(Collections.singletonList(client.getDto(subEntityName, subId)));
 			}
 		}
-		responseString = HtmlTools.entityView(entity, dto,subDtos);
-		return responseString;
+		return HtmlTools.entityView(entity, dto,subDtos);
+	}
+	
+	private String buildServerControls() throws RoseException
+	{
+		final Map<String, String> status = client.getServerStatus();
+		return HtmlTools.serverControls(status);
 	}
 
 }

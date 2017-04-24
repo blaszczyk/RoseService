@@ -1,6 +1,8 @@
 package bn.blaszczyk.roseservice.web;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import bn.blaszczyk.rose.model.Entity;
 import bn.blaszczyk.rose.model.EntityField;
@@ -13,7 +15,8 @@ public class HtmlTools {
 	public static String startPage()
 	{
 		final HtmlBuilder hb = new HtmlBuilder();
-		hb.h1(TypeManager.getMainClass().getSimpleName());
+		hb.append(linkTo("Server", "server"))
+			.h1(TypeManager.getMainClass().getSimpleName());
 		for(Class<?> type : TypeManager.getEntityClasses())
 		{
 			final String name = type.getSimpleName();
@@ -86,6 +89,22 @@ public class HtmlTools {
 			.append("</form>");
 		return hb.build();
 	}
+
+	public static String serverControls(final Map<String, String> status)
+	{
+		final HtmlBuilder hb = new HtmlBuilder();
+		hb.append(linkTo("start"))
+			.h1("Server Controls")
+			.append("<table>");
+		for(final Entry<String,String> entry : status.entrySet())
+			hb.append("<tr><td>")
+				.append(entry.getKey())
+				.append("</td><td>")
+				.append(entry.getValue())
+				.append("</td></tr>");
+		hb.append("</table>");
+		return hb.build();
+	}
 	
 	private static String linkTo(final String text, final Object... path )
 	{
@@ -156,17 +175,17 @@ public class HtmlTools {
 		for(final Field field : entity.getFields())
 			sb.append("</th><th>")
 				.append(field.getName());
-		sb.append("</th>");
+		sb.append("</th></tr>");
 		for(final RoseDto dto : dtos)
 		{
-			sb.append("</tr><tr><td>")
+			sb.append("<tr><td>")
 				.append(linkTo(String.valueOf(dto.getId()), entity.getObjectName(), dto.getId()  ));
 			for(int i = 0; i < entity.getFields().size();i++)
 				sb.append("</td><td>")
 					.append(linkTo(String.valueOf(dto.getFieldValue(i)), entity.getObjectName(), dto.getId() ));
-			sb.append("</td>");
-		}	
-		return sb.append("</tr></table>").toString();
+			sb.append("</td></tr>");
+		}
+		return sb.append("</table>").toString();
 	}
 	
 }

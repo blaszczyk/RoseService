@@ -6,6 +6,7 @@ import bn.blaszczyk.roseservice.controller.HibernateController;
 import bn.blaszczyk.roseservice.server.EntityEndpoint;
 import bn.blaszczyk.roseservice.server.RoseHandler;
 import bn.blaszczyk.roseservice.server.RoseServer;
+import bn.blaszczyk.roseservice.server.ServerEndpoint;
 import bn.blaszczyk.roseservice.tools.TypeManager;
 import bn.blaszczyk.roseservice.web.WebEndpoint;
 
@@ -21,9 +22,10 @@ public class Launcher {
 		TypeManager.parseRoseFile(Launcher.class.getClassLoader().getResourceAsStream(args[0]));
 		final HibernateController controller = new HibernateController();
 		final RoseHandler handler = new RoseHandler();
+		final RoseServer server = new RoseServer(4053, handler);
 		handler.registerEndpoint("entity", new EntityEndpoint(controller));
 		handler.registerEndpoint("web", new WebEndpoint());
-		final RoseServer server = new RoseServer(4053, handler);
+		handler.registerEndpoint("server", new ServerEndpoint(server));
 
 		try
 		 {
