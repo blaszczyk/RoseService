@@ -28,6 +28,7 @@ public class RoseHandler extends AbstractHandler {
 	
 	public void registerEndpoint(final String path, final Endpoint endpoint)
 	{
+		LOGGER.info("registering endpoint " + endpoint.getClass().getSimpleName() + " at /" + path);
 		endpoints.put(path, endpoint);
 	}
 	

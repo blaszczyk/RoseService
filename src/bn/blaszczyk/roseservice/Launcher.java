@@ -2,6 +2,7 @@
 
 import org.apache.log4j.Logger;
 
+import bn.blaszczyk.roseservice.calculator.CalculatorEndpoint;
 import bn.blaszczyk.roseservice.controller.CacheController;
 import bn.blaszczyk.roseservice.controller.ConsistencyController;
 import bn.blaszczyk.roseservice.controller.HibernateController;
@@ -39,6 +40,7 @@ public class Launcher {
 		handler.registerEndpoint("entity", new EntityEndpoint(controller));
 		handler.registerEndpoint("web", new WebEndpoint());
 		handler.registerEndpoint("server", new ServerEndpoint(server));
+		handler.registerEndpoint("calc", new CalculatorEndpoint());
 		
 		try
 		{

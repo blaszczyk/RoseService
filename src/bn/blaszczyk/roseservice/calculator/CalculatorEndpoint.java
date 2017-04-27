@@ -2,104 +2,102 @@ package bn.blaszczyk.roseservice.calculator;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.Writer;
 import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.eclipse.jetty.server.Request;
-import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.handler.AbstractHandler;
-import org.eclipse.jetty.server.handler.ErrorHandler;
+import bn.blaszczyk.roseservice.RoseException;
+import bn.blaszczyk.roseservice.server.Endpoint;
+import bn.blaszczyk.roseservice.web.HtmlBuilder;
 
-public class CalculatorService extends AbstractHandler {
+public class CalculatorEndpoint implements Endpoint {
 	
 	private static final String IMG_TAG = "<img src=\"calculator.png\" alt=\"Calculator\" style=\"width:32px;height:32px;\">";
 
 	private static final Pattern LONG_PATTERN = Pattern.compile("\\([0-9\\*\\+\\-]*\\)");
 	
 	private static final Pattern DOUBLE_PATTERN = Pattern.compile("\\([0-9\\*\\+\\-\\/\\.]*\\)");
-	
-	private static Server server;
-	
+
+
 	@Override
-	public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response)
-			throws IOException, ServletException
+	public int get(String path, HttpServletRequest request, HttpServletResponse response) throws RoseException
 	{
+
         response.setContentType("text/html; charset=utf-8");
-        response.setStatus(HttpServletResponse.SC_OK);
-        final String requestData = target.substring(1);
         try
         {
-        	System.out.println(target);
-        	if(requestData.contains("favicon.ico"))
+        	if(path.contains("favicon.ico"))
+        	{
         		Files.copy(new File("C:/Users/Michael/Desktop/Java Projects/RoseService/calculator.ico").toPath(), response.getOutputStream());
-        	else if(requestData.contains("calculator.png"))
+        		return HttpServletResponse.SC_OK;
+        	}
+        	if(path.contains("calculator.png"))
+        	{
         		Files.copy(new File("C:/Users/Michael/Desktop/Java Projects/RoseService/calculator.png").toPath(), response.getOutputStream());
-        	else if(requestData.contains("kill"))
-            	stopServer(response.getWriter());
-            else if(validateLong(requestData))
-            	evaluateRequestLong(requestData, response.getWriter());
-            else if(validateDouble(requestData))
-            	evaluateRequestDouble(requestData, response.getWriter());
+        		return HttpServletResponse.SC_OK;
+        	}
+        	final String responseString;
+            if(validateLong(path))
+            	responseString = evaluateRequestLong(path);
+            else if(validateDouble(path))
+            	responseString = evaluateRequestDouble(path);
             else
-            	response.getWriter().write("<h2>invalid request: " + requestData + "</h2>");
+            	responseString = "invalid request: " + path;
+            final HtmlBuilder hb = new HtmlBuilder();
+            hb.append(IMG_TAG).h2(responseString);
+            response.getWriter().write(hb.build());
         }
         catch(Exception e)
         {
-        	response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-        	response.getWriter().write("<h2>error</h2>");
-        	e.printStackTrace(response.getWriter());
-        	e.printStackTrace();
+        	return HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
         }
-        finally
-        {
-        	baseRequest.setHandled(true);
-        }
+		return HttpServletResponse.SC_OK;
 	}
 
-	private void evaluateRequestLong(String target, Writer writer) throws IOException
+	@Override
+	public int post(String path, HttpServletRequest request, HttpServletResponse response) throws RoseException
+	{
+		return HttpServletResponse.SC_NOT_FOUND;
+	}
+
+	@Override
+	public int put(String path, HttpServletRequest request, HttpServletResponse response) throws RoseException
+	{
+		return HttpServletResponse.SC_NOT_FOUND;
+	}
+
+	@Override
+	public int delete(String path, HttpServletRequest request, HttpServletResponse response) throws RoseException
+	{
+		return HttpServletResponse.SC_NOT_FOUND;
+	}
+
+	@Override
+	public Map<String, String> status()
+	{
+		return Collections.singletonMap("endpoint: /calc", "active");
+	}
+
+	private String evaluateRequestLong(String target) throws IOException
 	{
 		final String requestString = target.replaceAll("\\s+", "")
 				.replaceAll("(?<=[0-9])\\(", "*(")
 				.replaceAll("\\)(?=[0-9])", ")*");
-		final String responseString = requestString + "=" + evaluateLong(requestString);
-		writer.write( "<h1>" + IMG_TAG + responseString + "</h1>");
-		System.out.println("result: " + responseString);
+		return requestString + "=" + evaluateLong(requestString);
 	}
 
-	private void evaluateRequestDouble(String target, Writer writer) throws IOException
+	private String evaluateRequestDouble(String target) throws IOException
 	{
 		final String requestString = target.replaceAll("\\s+", "")
 				.replaceAll("(?<=[0-9])\\(", "*(")
 				.replaceAll("\\)(?=[0-9])", ")*");
-		final String responseString = requestString + "=" + evaluateDouble(requestString);
-		writer.write( "<h1>" + IMG_TAG + responseString + "</h1>");
-		System.out.println("result: " + responseString);
-	}
-	
-	private void stopServer(final Writer responseWriter) throws IOException
-	{
-    	System.out.println("Server stop");
-    	responseWriter.write("<h1> und tschüss </h1>");
-        new Thread(() -> {
-        	try{
-        		Thread.sleep(3000);
-        		server.stop();
-        	}
-        	catch(Exception e)
-        	{
-        		e.printStackTrace();
-        	}
-        	System.exit(0);
-        }).start();
-        return;
+		return requestString + "=" + evaluateDouble(requestString);
 	}
 	
 	private static long evaluateLong(final String expression)
@@ -163,9 +161,9 @@ public class CalculatorService extends AbstractHandler {
     			.flatMap(Arrays::stream)
     			.map(s -> s.split("\\*"))
     			.map(Arrays::stream)
-    			.map(s -> s.map( CalculatorService::parseDouble )
-    					.reduce(1., CalculatorService::multiply))
-    			.reduce(0., CalculatorService::add);
+    			.map(s -> s.map( CalculatorEndpoint::parseDouble )
+    					.reduce(1., CalculatorEndpoint::multiply))
+    			.reduce(0., CalculatorEndpoint::add);
 	}
 	
 	private static double multiply(final double d1, final double d2)
@@ -204,26 +202,5 @@ public class CalculatorService extends AbstractHandler {
 		}
 		return reducedExpression.length() == 0;
 	}
-	
-    public static void main( String[] args ) throws Exception
-    {
-    	System.out.println("Server start");
-        server = new Server(1337);
-        server.setHandler(new CalculatorService());
-        server.setErrorHandler(new ErrorHandler(){
-
-			@Override
-			public void handle(String target, Request baseRequest, HttpServletRequest request,
-					HttpServletResponse response) throws IOException
-			{
-				super.handle(target, baseRequest, request, response);
-				System.err.println(target);
-			}
-        	
-        });
-
-        server.start();
-        server.join();
-    }
 	
 }
