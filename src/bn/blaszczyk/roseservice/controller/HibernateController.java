@@ -86,23 +86,34 @@ public class HibernateController implements ModelController {
 	}
 
 	@Override
-	public Readable getEntityById(final Class<? extends Readable> type, int id)
+	public Readable getEntityById(final Class<? extends Readable> type, final int id) throws RoseException
 	{
-		final Criteria criteria = getSession().createCriteria(type);
-		criteria.add(Restrictions.idEq(id));
-		final List<?> entities = criteria.list();
-		if(entities.size() != 1)
-			return null;
-		return (Readable) entities.get(0);
+		try
+		{
+			final Criteria criteria = getSession().createCriteria(type);
+			criteria.add(Restrictions.idEq(id));
+			return (Readable) criteria.uniqueResult();
+		}
+		catch (HibernateException e) 
+		{
+			throw RoseException.wrap(e, "error getting " + type.getSimpleName() + " with id=" + id);
+		}
 	}
 
 	@Override
-	public int getEntityCount(Class<? extends Readable> type)
+	public int getEntityCount(final Class<? extends Readable> type) throws RoseException
 	{
-		final Object oCount = getSession().createCriteria(type).setProjection(Projections.rowCount()).uniqueResult();
-		if(oCount instanceof Number)
-			return ((Number)oCount).intValue();
-		return 0;
+		try
+		{
+			final Object oCount = getSession().createCriteria(type).setProjection(Projections.rowCount()).uniqueResult();
+			if(oCount instanceof Number)
+				return ((Number)oCount).intValue();
+			return 0;
+		}
+		catch (HibernateException e) 
+		{
+			throw RoseException.wrap(e, "error getting count for " + type.getSimpleName());
+		}
 	}
 
 	@Override
@@ -151,12 +162,9 @@ public class HibernateController implements ModelController {
 		for(int i = 0; i < entity.getEntityCount(); i++)
 		{
 			if(entity.getRelationType(i).isSecondMany())
-			{
-				Set<? extends Readable> set = new TreeSet<>( entity.getEntityValueMany(i));
-				for(Readable subEntity : set)
+				for(final Readable subEntity : entity.getEntityValueMany(i))
 					if(subEntity != null)
 						changedEntities.add((Writable) subEntity);
-			}
 			else
 				if(entity.getEntityValueOne(i) != null)
 					changedEntities.add((Writable) entity.getEntityValueOne(i));

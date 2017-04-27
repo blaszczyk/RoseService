@@ -33,13 +33,13 @@ public class CacheController extends AbstractControllerDecorator implements Mode
 	}
 
 	@Override
-	public int getEntityCount(final Class<? extends Readable> type)
+	public int getEntityCount(final Class<? extends Readable> type) throws RoseException
 	{
 		return allEntities.get(type).size();
 	}
 
 	@Override
-	public Readable getEntityById(Class<? extends Readable> type, int id)
+	public Readable getEntityById(Class<? extends Readable> type, int id) throws RoseException
 	{
 		if(!hasEntityId(type, id))
 			return addEntity(controller.getEntityById(type, id));

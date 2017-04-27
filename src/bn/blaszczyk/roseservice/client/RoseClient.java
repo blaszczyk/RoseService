@@ -20,9 +20,9 @@ public class RoseClient {
 	
 	private final WebClient webClient;
 
-	public RoseClient()
+	public RoseClient(final String url)
 	{
-		webClient = WebClient.create("http://localhost:4053");
+		webClient = WebClient.create(url);
 	}
 	
 	public RoseDto getDto(final String typeName, final int id) throws RoseException
@@ -57,6 +57,22 @@ public class RoseClient {
 		if(entityIds.isEmpty())
 			return Collections.emptyList();
 		return getDtos(typeName + "/" + commaSeparated(entityIds));
+	}
+
+	public int getCount(final String typeName) throws RoseException
+	{
+		final String path = "/entity/" + typeName + "/count";
+		try
+		{
+			webClient.replacePath(path);
+			webClient.resetQuery();
+			final String response = webClient.get(String.class);
+			return Integer.parseInt(response);
+		}
+		catch (Exception e) 
+		{
+			throw RoseException.wrap(e, "Errpr on GET@" + path);
+		}
 	}
 
 	public RoseDto postDto(final RoseDto dto) throws RoseException

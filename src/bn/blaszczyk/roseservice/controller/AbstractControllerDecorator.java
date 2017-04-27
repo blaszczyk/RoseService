@@ -16,19 +16,19 @@ public abstract class AbstractControllerDecorator implements ModelController {
 	}
 	
 	@Override
-	public List<Readable> getEntities(Class<? extends Readable> type) throws RoseException
+	public List<? extends Readable> getEntities(Class<? extends Readable> type) throws RoseException
 	{
 		return controller.getEntities(type);
 	}
 	
 	@Override
-	public int getEntityCount(Class<? extends Readable> type)
+	public int getEntityCount(Class<? extends Readable> type) throws RoseException
 	{
 		return controller.getEntityCount(type);
 	}
 	
 	@Override
-	public Readable getEntityById(Class<? extends Readable> type, int id)
+	public Readable getEntityById(Class<? extends Readable> type, int id) throws RoseException
 	{
 		return controller.getEntityById(type, id);
 	}

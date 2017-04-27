@@ -22,7 +22,12 @@ import bn.blaszczyk.roseservice.tools.TypeManager;
 
 public class WebEndpoint implements Endpoint {
 	
-	private static RoseClient client = new RoseClient();
+	private static RoseClient client;
+	
+	public WebEndpoint(final String url)
+	{
+		client = new RoseClient(url);
+	}
 	
 	@Override
 	public int get(String path, HttpServletRequest request, HttpServletResponse response) throws RoseException

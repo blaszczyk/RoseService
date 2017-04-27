@@ -18,6 +18,8 @@ import bn.blaszczyk.rose.model.Readable;
 
 public class Launcher {
 	
+	private static final int PORT = 4053;
+	
 	private Launcher( final String[] args)
 	{
 		if(args.length == 0)
@@ -35,10 +37,10 @@ public class Launcher {
 		final ModelController controller = new ConsistencyController(cacheController);
 		
 		final RoseHandler handler = new RoseHandler();
-		final RoseServer server = new RoseServer(4053, handler);
+		final RoseServer server = new RoseServer(PORT, handler);
 		
 		handler.registerEndpoint("entity", new EntityEndpoint(controller));
-		handler.registerEndpoint("web", new WebEndpoint());
+		handler.registerEndpoint("web", new WebEndpoint("http://localhost:" + PORT));
 		handler.registerEndpoint("server", new ServerEndpoint(server));
 		handler.registerEndpoint("calc", new CalculatorEndpoint());
 		

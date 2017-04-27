@@ -1,6 +1,5 @@
 package bn.blaszczyk.roseservice.server;
 
-import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -19,14 +18,13 @@ import com.google.gson.internal.StringMap;
 
 
 import bn.blaszczyk.rose.model.Entity;
-import bn.blaszczyk.rose.model.EnumField;
 import bn.blaszczyk.rose.model.Field;
-import bn.blaszczyk.rose.model.PrimitiveField;
 import bn.blaszczyk.rose.model.Writable;
 import bn.blaszczyk.rose.model.Readable;
 import bn.blaszczyk.roseservice.RoseException;
 import bn.blaszczyk.roseservice.controller.ModelController;
 import bn.blaszczyk.roseservice.model.RoseDto;
+import bn.blaszczyk.roseservice.tools.EntityUtils;
 import bn.blaszczyk.roseservice.tools.TypeManager;
 
 public class EntityEndpoint implements Endpoint {
@@ -52,16 +50,16 @@ public class EntityEndpoint implements Endpoint {
 		{
 			final Class<? extends Readable> type = pathOptions.getType();
 			final List<RoseDto> dtos;
-			if(pathOptions.getId()<0)
+			if(pathOptions.hasId())
+				dtos = pathOptions.getIds()
+				.stream()
+				.map(i -> getById(type, i))
+				.filter(e -> e != null)
+				.map(RoseDto::new)
+				.collect(Collectors.toList());
+			else
 				dtos = controller.getEntities(type)
 						.stream()
-						.map(RoseDto::new)
-						.collect(Collectors.toList());
-			else
-				dtos = pathOptions.getIds()
-						.stream()
-						.map(i -> controller.getEntityById(type, i))
-						.filter(e -> e != null)
 						.map(RoseDto::new)
 						.collect(Collectors.toList());
 			response.getWriter().write(GSON.toJson(dtos));
@@ -149,6 +147,19 @@ public class EntityEndpoint implements Endpoint {
 		return status;
 	}
 	
+	private Readable getById(final Class<? extends Readable> type, final int id)
+	{
+		try
+		{
+			return controller.getEntityById(type, id);
+		}
+		catch (RoseException e) 
+		{
+			LOGGER.error("Error getting " + type.getSimpleName() + " with id=" + id, e);
+			return null;
+		}
+	}
+	
 	private void update(final Writable entity, final RoseDto dto) throws RoseException
 	{
 		try
@@ -158,7 +169,7 @@ public class EntityEndpoint implements Endpoint {
 			{
 				final Field field = entityModel.getFields().get(i);
 				final String dtoValue = dto.getFieldValue(i);
-				final Object value = getPrimitiveValue(field, dtoValue);
+				final Object value = EntityUtils.getPrimitiveValue(field, dtoValue);
 				entity.setField(i, value);
 			}
 			for(int i = 0; i < entity.getEntityCount(); i++)
@@ -174,48 +185,6 @@ public class EntityEndpoint implements Endpoint {
 		{
 			throw RoseException.wrap(e,"error updating entity with dto " + dto.toString());
 		}
-	}
-	
-	private Object getPrimitiveValue(final Field field, final String dtoValue) throws RoseException
-	{
-		if(dtoValue == null || dtoValue.equals("null"))
-			return null;
-		try
-		{
-			if(field instanceof EnumField)
-			{
-				final Class<?> enumType = TypeManager.getClass(((EnumField) field).getEnumType());
-				for(final Object value : enumType.getEnumConstants())
-					if(value.toString().equals(dtoValue))
-						return value;
-			}
-			else if(field instanceof PrimitiveField)
-			{
-				final PrimitiveField pField = (PrimitiveField) field;
-				switch(pField.getType())
-				{
-				case BOOLEAN:
-					return Boolean.parseBoolean(dtoValue);
-				case DATE:
-					return RoseDto.DATE_FORMAT.parse(dtoValue);
-				case INT:
-					return Integer.parseInt(dtoValue);
-				case NUMERIC:
-					final BigDecimal numValue = (BigDecimal) RoseDto.BIG_DEC_FORMAT.parse(dtoValue);
-					checkNumeric(numValue,pField);
-					return numValue;
-				case CHAR:
-				case VARCHAR:
-					checkString(dtoValue,pField);
-					return dtoValue;
-				}
-			}
-		}
-		catch(Exception e)
-		{
-			throw RoseException.wrap(e,"Error parsing primitive '" + dtoValue + "' for " + field.getName());
-		}
-		return null;
 	}
 
 	private void updateOne(final Writable entity, final int index, final Integer entityId) throws RoseException
@@ -250,23 +219,6 @@ public class EntityEndpoint implements Endpoint {
 			entity.addEntity(index, subEntity);
 			controller.update(subEntity);
 		}
-	}
-
-	private void checkNumeric(final BigDecimal value, final PrimitiveField field) throws RoseException
-	{
-		final int precision = field.getLength1();
-		final int scale = field.getLength2();
-		if(value.scale() > scale)
-			throw new RoseException("numeric value " + field.getName() + "=" + value + " has wrong scale; max scale=" + scale);
-		if(value.precision() > precision)
-			throw new RoseException("numeric value " + field.getName() + "=" + value + " has wrong precision; max precision=" + precision);
-	}
-
-	private void checkString(final String value, final PrimitiveField field) throws RoseException
-	{
-		final int length = field.getLength1();
-		if(value.length() > length)
-			throw new RoseException("string value " + field.getName() + "='" + value + "' too long; max_length=" + length);
 	}
 
 }
