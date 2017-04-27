@@ -21,11 +21,11 @@ import bn.blaszczyk.rose.model.Entity;
 import bn.blaszczyk.rose.model.Field;
 import bn.blaszczyk.rose.model.Writable;
 import bn.blaszczyk.rose.model.Readable;
-import bn.blaszczyk.roseservice.RoseException;
-import bn.blaszczyk.roseservice.controller.ModelController;
-import bn.blaszczyk.roseservice.model.RoseDto;
-import bn.blaszczyk.roseservice.tools.EntityUtils;
-import bn.blaszczyk.roseservice.tools.TypeManager;
+import bn.blaszczyk.rosecommon.RoseException;
+import bn.blaszczyk.rosecommon.controller.ModelController;
+import bn.blaszczyk.rosecommon.dto.RoseDto;
+import bn.blaszczyk.rosecommon.tools.EntityUtils;
+import bn.blaszczyk.rosecommon.tools.TypeManager;
 
 public class EntityEndpoint implements Endpoint {
 	

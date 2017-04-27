@@ -13,12 +13,12 @@ import javax.servlet.http.HttpServletResponse;
 import bn.blaszczyk.rose.model.Readable;
 import bn.blaszczyk.rose.model.Entity;
 import bn.blaszczyk.rose.model.EntityField;
-import bn.blaszczyk.roseservice.RoseException;
-import bn.blaszczyk.roseservice.client.RoseClient;
-import bn.blaszczyk.roseservice.model.RoseDto;
+import bn.blaszczyk.rosecommon.RoseException;
+import bn.blaszczyk.rosecommon.client.RoseClient;
+import bn.blaszczyk.rosecommon.dto.RoseDto;
+import bn.blaszczyk.rosecommon.tools.TypeManager;
 import bn.blaszczyk.roseservice.server.Endpoint;
 import bn.blaszczyk.roseservice.server.PathOptions;
-import bn.blaszczyk.roseservice.tools.TypeManager;
 
 public class WebEndpoint implements Endpoint {
 	

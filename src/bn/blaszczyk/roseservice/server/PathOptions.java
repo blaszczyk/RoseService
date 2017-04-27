@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 import bn.blaszczyk.rose.model.Readable;
-import bn.blaszczyk.roseservice.tools.TypeManager;
+import bn.blaszczyk.rosecommon.tools.TypeManager;
 
 public class PathOptions
 {

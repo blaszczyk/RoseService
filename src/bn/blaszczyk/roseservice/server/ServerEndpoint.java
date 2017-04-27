@@ -8,7 +8,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import com.google.gson.Gson;
 
-import bn.blaszczyk.roseservice.RoseException;
+import bn.blaszczyk.rosecommon.RoseException;
 
 public class ServerEndpoint implements Endpoint {
 	

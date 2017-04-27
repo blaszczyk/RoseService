@@ -12,7 +12,7 @@ import org.apache.log4j.Logger;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.AbstractHandler;
 
-import bn.blaszczyk.roseservice.RoseException;
+import bn.blaszczyk.rosecommon.RoseException;
 import bn.blaszczyk.roseservice.web.HtmlBuilder;
 
 public class RoseHandler extends AbstractHandler {

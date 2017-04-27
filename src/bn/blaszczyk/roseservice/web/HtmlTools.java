@@ -7,8 +7,8 @@ import java.util.Map.Entry;
 import bn.blaszczyk.rose.model.Entity;
 import bn.blaszczyk.rose.model.EntityField;
 import bn.blaszczyk.rose.model.Field;
-import bn.blaszczyk.roseservice.model.RoseDto;
-import bn.blaszczyk.roseservice.tools.TypeManager;
+import bn.blaszczyk.rosecommon.dto.RoseDto;
+import bn.blaszczyk.rosecommon.tools.TypeManager;
 
 public class HtmlTools {
 
