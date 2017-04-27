@@ -7,10 +7,11 @@ import org.apache.log4j.Logger;
 import bn.blaszczyk.rose.model.Readable;
 import bn.blaszczyk.rose.model.Writable;
 import bn.blaszczyk.roseservice.RoseException;
+import bn.blaszczyk.roseservice.proxy.EntityAccess;
 import bn.blaszczyk.roseservice.tools.EntityUtils;
 import bn.blaszczyk.roseservice.tools.TypeManager;
 
-public class CacheController extends AbstractControllerDecorator implements ModelController {
+public class CacheController extends AbstractControllerDecorator implements ModelController, EntityAccess {
 	
 	private static final Logger LOGGER = Logger.getLogger(CacheController.class);
 
@@ -100,6 +101,21 @@ public class CacheController extends AbstractControllerDecorator implements Mode
 		}
 		entities.put(id, entity);
 		return entity;
+	}
+
+	@Override
+	public Writable getOne(final Class<? extends Readable> type, final int id) throws RoseException
+	{
+		return (Writable) getEntityById(type, id);
+	}
+
+	@Override
+	public List<Writable> getMany(final Class<? extends Readable> type, final List<Integer> ids) throws RoseException
+	{
+		final List<Writable> entities = new ArrayList<>(ids.size());
+		for(final Integer id : ids)
+			entities.add(getOne(type, id));
+		return entities;
 	}
 
 }
