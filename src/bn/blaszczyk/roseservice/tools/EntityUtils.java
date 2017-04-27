@@ -7,6 +7,11 @@ import bn.blaszczyk.rose.model.Readable;
 
 public final class EntityUtils {
 
+	public static String toStringSimple(Identifyable entity)
+	{
+		return String.format("%s id=%d", entity.getClass().getSimpleName(), entity.getId());
+	}
+	
 	public static String toStringPrimitives(Readable entity)
 	{
 		if(entity == null)
@@ -63,4 +68,5 @@ public final class EntityUtils {
 			return false;
 		return i1.getId().equals(i2.getId());
 	}
+
 }

@@ -143,4 +143,9 @@ public class TypeManager {
 		LOGGER.error("unknown type: " + type.getName());
 		return type;
 	}
+
+	public static Class<? extends Readable> getClass(Readable entity)
+	{
+		return convertType(entity.getClass());
+	}
 }

@@ -25,7 +25,7 @@ import bn.blaszczyk.rose.model.PrimitiveField;
 import bn.blaszczyk.rose.model.Writable;
 import bn.blaszczyk.rose.model.Readable;
 import bn.blaszczyk.roseservice.RoseException;
-import bn.blaszczyk.roseservice.controller.HibernateController;
+import bn.blaszczyk.roseservice.controller.ModelController;
 import bn.blaszczyk.roseservice.model.RoseDto;
 import bn.blaszczyk.roseservice.tools.TypeManager;
 
@@ -35,9 +35,9 @@ public class EntityEndpoint implements Endpoint {
 	
 	private static final Gson GSON = new Gson();
 	
-	private final HibernateController controller;
+	private final ModelController controller;
 
-	public EntityEndpoint(final HibernateController controller)
+	public EntityEndpoint(final ModelController controller)
 	{
 		this.controller = controller;
 	}
@@ -50,10 +50,10 @@ public class EntityEndpoint implements Endpoint {
 			return HttpServletResponse.SC_NOT_FOUND;
 		try
 		{
-			final Class<?> type = pathOptions.getType();
+			final Class<? extends Readable> type = pathOptions.getType();
 			final List<RoseDto> dtos;
 			if(pathOptions.getId()<0)
-				dtos = controller.getEntites(type)
+				dtos = controller.getEntities(type)
 						.stream()
 						.map(RoseDto::new)
 						.collect(Collectors.toList());
@@ -169,7 +169,6 @@ public class EntityEndpoint implements Endpoint {
 					updateOne(entity,i,dto.getEntityId(i));
 			}
 			controller.update(entity);
-			controller.commit();
 		}
 		catch(Exception e)
 		{
