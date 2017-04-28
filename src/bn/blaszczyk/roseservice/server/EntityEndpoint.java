@@ -44,25 +44,43 @@ public class EntityEndpoint implements Endpoint {
 	public int get(final String path, final HttpServletRequest request, final HttpServletResponse response) throws RoseException
 	{
 		final PathOptions pathOptions = new PathOptions(path);
-		if(!pathOptions.isValid() || pathOptions.hasOptions())
+		if(!pathOptions.isValid())
 			return HttpServletResponse.SC_NOT_FOUND;
 		try
 		{
 			final Class<? extends Readable> type = pathOptions.getType();
-			final List<RoseDto> dtos;
-			if(pathOptions.hasId())
-				dtos = pathOptions.getIds()
-				.stream()
-				.map(i -> getById(type, i))
-				.filter(e -> e != null)
-				.map(RoseDto::new)
-				.collect(Collectors.toList());
+			final String responseString;
+			if(pathOptions.hasOptions())
+				switch (pathOptions.getOptions()[0])
+				{
+				case "count":
+					responseString = Integer.toString(controller.getEntityCount(type));
+					break;
+				case "id":
+					final List<Integer> ids = controller.getIds(type);
+					responseString = GSON.toJson(ids);
+					break;
+				default:
+					return HttpServletResponse.SC_NOT_FOUND;
+				}
 			else
-				dtos = controller.getEntities(type)
-						.stream()
-						.map(RoseDto::new)
-						.collect(Collectors.toList());
-			response.getWriter().write(GSON.toJson(dtos));
+			{
+				final List<RoseDto> dtos;
+				if(pathOptions.hasId())
+					dtos = pathOptions.getIds()
+										.stream()
+										.map(i -> getById(type, i))
+										.filter(e -> e != null)
+										.map(RoseDto::new)
+										.collect(Collectors.toList());
+				else
+					dtos = controller.getEntities(type)
+										.stream()
+										.map(RoseDto::new)
+										.collect(Collectors.toList());
+				responseString = GSON.toJson(dtos);
+			}
+			response.getWriter().write(responseString);
 			return HttpServletResponse.SC_OK;
 		}
 		catch (Exception e) 
