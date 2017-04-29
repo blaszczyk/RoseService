@@ -1,5 +1,7 @@
 package bn.blaszczyk.roseservice.server;
 
+import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -27,8 +29,10 @@ import bn.blaszczyk.rosecommon.dto.RoseDto;
 import bn.blaszczyk.rosecommon.tools.EntityUtils;
 import bn.blaszczyk.rosecommon.tools.TypeManager;
 
+import static bn.blaszczyk.rosecommon.client.RoseClient.CODING_CHARSET;
+
 public class EntityEndpoint implements Endpoint {
-	
+
 	private static final Logger LOGGER = Logger.getLogger(EntityEndpoint.class);
 	
 	private static final Gson GSON = new Gson();
@@ -80,7 +84,8 @@ public class EntityEndpoint implements Endpoint {
 										.collect(Collectors.toList());
 				responseString = GSON.toJson(dtos);
 			}
-			response.getWriter().write(responseString);
+			final String encodedResponseString = URLEncoder.encode(responseString, CODING_CHARSET);
+			response.getWriter().write(encodedResponseString);
 			return HttpServletResponse.SC_OK;
 		}
 		catch (Exception e) 
@@ -97,14 +102,19 @@ public class EntityEndpoint implements Endpoint {
 			final PathOptions pathOptions = new PathOptions(path);
 			if(!pathOptions.isValid() || pathOptions.hasId() || pathOptions.hasOptions())
 				return HttpServletResponse.SC_NOT_FOUND;
-			final StringMap<?> stringMap = GSON.fromJson(request.getReader(), StringMap.class);
+			
+			final String encodedRequestString = request.getReader().lines().collect(Collectors.joining("\r\n"));
+			final String requestString = URLDecoder.decode(encodedRequestString, CODING_CHARSET);
+			final StringMap<?> stringMap = GSON.fromJson(requestString, StringMap.class);
 			final RoseDto dto = new RoseDto(stringMap);
 			LOGGER.debug("posting dto " + dto );
 			if(!pathOptions.getType().equals(dto.getType()))
 				return HttpServletResponse.SC_BAD_REQUEST;
 			final Writable entity = (Writable) controller.createNew(dto.getType());
 			update(entity, dto);
-			response.getWriter().write(GSON.toJson(new RoseDto(entity)));
+			final String responseString = GSON.toJson(new RoseDto(entity));
+			final String encodedResponseString = URLEncoder.encode(responseString, CODING_CHARSET);
+			response.getWriter().write(encodedResponseString);
 			return HttpServletResponse.SC_CREATED;
 		}
 		catch (Exception e) 
@@ -121,7 +131,9 @@ public class EntityEndpoint implements Endpoint {
 			final PathOptions pathOptions = new PathOptions(path);
 			if(!pathOptions.isValid())
 				return HttpServletResponse.SC_NOT_FOUND;
-			final StringMap<?> stringMap = GSON.fromJson(request.getReader(), StringMap.class);
+			final String encodedRequestString = request.getReader().lines().collect(Collectors.joining("\r\n"));
+			final String requestString = URLDecoder.decode(encodedRequestString, CODING_CHARSET);
+			final StringMap<?> stringMap = GSON.fromJson(requestString, StringMap.class);
 			final RoseDto dto = new RoseDto(stringMap);
 			LOGGER.debug("putting dto " + dto);
 			if(pathOptions.getId() != dto.getId() || !pathOptions.getType().equals(dto.getType()))

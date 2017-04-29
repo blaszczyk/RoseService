@@ -1,5 +1,6 @@
 package bn.blaszczyk.roseservice.server;
 
+import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -9,6 +10,8 @@ import javax.servlet.http.HttpServletResponse;
 import com.google.gson.Gson;
 
 import bn.blaszczyk.rosecommon.RoseException;
+
+import static bn.blaszczyk.rosecommon.client.RoseClient.CODING_CHARSET;
 
 public class ServerEndpoint implements Endpoint {
 	
@@ -32,7 +35,8 @@ public class ServerEndpoint implements Endpoint {
 				final Map<String,String> status = server.getHandler().getStatus();
 				responseString = GSON.toJson(status);
 			}
-			response.getWriter().write(responseString);
+			final String encodedResponceString = URLEncoder.encode(responseString, CODING_CHARSET);
+			response.getWriter().write(encodedResponceString);
 			return HttpServletResponse.SC_OK;
 		}
 		catch (Exception e) 
