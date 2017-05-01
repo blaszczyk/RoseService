@@ -42,7 +42,7 @@ public class Launcher {
 		try
 		{
 			for(Class<? extends Readable> type : TypeManager.getEntityClasses())
-				cacheController.synchronize(type);
+				cacheController.getEntities(type);
 			server.startServer();
 		}
 		catch(RoseException e)

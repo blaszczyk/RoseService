@@ -219,15 +219,19 @@ public class EntityEndpoint implements Endpoint {
 
 	private void updateOne(final Writable entity, final int index, final Integer entityId) throws RoseException
 	{
-		Writable subEntity = (Writable) entity.getEntityValueOne(index);
-		if( subEntity == null || !subEntity.getId().equals(entityId))
+		final Writable oldEntity = (Writable) entity.getEntityValueOne(index);
+		if( oldEntity == null || !oldEntity.getId().equals(entityId))
 		{
+			final Writable newEntity;
 			if(entityId < 0)
-				subEntity = null;
+				newEntity = null;
 			else
-				subEntity = (Writable) controller.getEntityById(entity.getEntityClass(index), entityId);
-			entity.setEntity(index, subEntity);
-			controller.update(subEntity);
+				newEntity = (Writable) controller.getEntityById(entity.getEntityClass(index), entityId);
+			entity.setEntity(index, newEntity);
+			if(oldEntity != null)
+				controller.update(oldEntity);
+			if(newEntity != null)
+				controller.update(newEntity);
 		}
 	}
 
