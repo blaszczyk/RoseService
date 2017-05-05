@@ -4,11 +4,13 @@ import org.apache.log4j.Logger;
 
 import bn.blaszczyk.rosecommon.RoseException;
 import bn.blaszczyk.rosecommon.controller.*;
+import bn.blaszczyk.rosecommon.tools.CommonPreference;
+import bn.blaszczyk.rosecommon.tools.LoggerConfigurator;
+import bn.blaszczyk.rosecommon.tools.Preferences;
 import bn.blaszczyk.rosecommon.tools.TypeManager;
 import bn.blaszczyk.roseservice.calculator.CalculatorEndpoint;
 import bn.blaszczyk.roseservice.server.*;
 import bn.blaszczyk.roseservice.web.WebEndpoint;
-
 import bn.blaszczyk.rose.model.Readable;
 
 public class Launcher {
@@ -23,6 +25,8 @@ public class Launcher {
 			System.exit(1);
 		}
 		TypeManager.parseRoseFile(Launcher.class.getClassLoader().getResourceAsStream(args[0]));
+		Preferences.setMainClass(RoseServer.class);
+		LoggerConfigurator.configureLogger(CommonPreference.BASE_DIRECTORY, CommonPreference.LOG_LEVEL);
 	}
 	
 	public void launch()

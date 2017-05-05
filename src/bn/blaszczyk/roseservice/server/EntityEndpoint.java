@@ -1,5 +1,7 @@
 package bn.blaszczyk.roseservice.server;
 
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.HashMap;
@@ -84,8 +86,7 @@ public class EntityEndpoint implements Endpoint {
 										.collect(Collectors.toList());
 				responseString = GSON.toJson(dtos);
 			}
-			final String encodedResponseString = URLEncoder.encode(responseString, CODING_CHARSET);
-			response.getWriter().write(encodedResponseString);
+			writeEncodedResponse(response, responseString);
 			return HttpServletResponse.SC_OK;
 		}
 		catch (Exception e) 
@@ -103,18 +104,14 @@ public class EntityEndpoint implements Endpoint {
 			if(!pathOptions.isValid() || pathOptions.hasId() || pathOptions.hasOptions())
 				return HttpServletResponse.SC_NOT_FOUND;
 			
-			final String encodedRequestString = request.getReader().lines().collect(Collectors.joining("\r\n"));
-			final String requestString = URLDecoder.decode(encodedRequestString, CODING_CHARSET);
-			final StringMap<?> stringMap = GSON.fromJson(requestString, StringMap.class);
-			final RoseDto dto = new RoseDto(stringMap);
+			final RoseDto dto = getRequestDto(request);
 			LOGGER.debug("posting dto " + dto );
 			if(!pathOptions.getType().equals(dto.getType()))
 				return HttpServletResponse.SC_BAD_REQUEST;
 			final Writable entity = (Writable) controller.createNew(dto.getType());
 			update(entity, dto);
 			final String responseString = GSON.toJson(new RoseDto(entity));
-			final String encodedResponseString = URLEncoder.encode(responseString, CODING_CHARSET);
-			response.getWriter().write(encodedResponseString);
+			writeEncodedResponse(response, responseString);
 			return HttpServletResponse.SC_CREATED;
 		}
 		catch (Exception e) 
@@ -131,10 +128,7 @@ public class EntityEndpoint implements Endpoint {
 			final PathOptions pathOptions = new PathOptions(path);
 			if(!pathOptions.isValid())
 				return HttpServletResponse.SC_NOT_FOUND;
-			final String encodedRequestString = request.getReader().lines().collect(Collectors.joining("\r\n"));
-			final String requestString = URLDecoder.decode(encodedRequestString, CODING_CHARSET);
-			final StringMap<?> stringMap = GSON.fromJson(requestString, StringMap.class);
-			final RoseDto dto = new RoseDto(stringMap);
+			final RoseDto dto = getRequestDto(request);
 			LOGGER.debug("putting dto " + dto);
 			if(pathOptions.getId() != dto.getId() || !pathOptions.getType().equals(dto.getType()))
 				return HttpServletResponse.SC_BAD_REQUEST;
@@ -175,6 +169,21 @@ public class EntityEndpoint implements Endpoint {
 		status.put("endpoint /entity", "active");
 		status.put("database connection", "active");
 		return status;
+	}
+
+	private RoseDto getRequestDto(final HttpServletRequest request)	throws IOException, UnsupportedEncodingException, RoseException
+	{
+		final String encodedRequestString = request.getReader().lines().collect(Collectors.joining("\r\n"));
+		final String requestString = URLDecoder.decode(encodedRequestString, CODING_CHARSET);
+		final StringMap<?> stringMap = GSON.fromJson(requestString, StringMap.class);
+		final RoseDto dto = new RoseDto(stringMap);
+		return dto;
+	}
+	
+	private void writeEncodedResponse(final HttpServletResponse response, final String responseString) throws UnsupportedEncodingException, IOException
+	{
+		final String encodedResponseString = URLEncoder.encode(responseString, CODING_CHARSET);
+		response.getWriter().write(encodedResponseString);
 	}
 	
 	private Readable getById(final Class<? extends Readable> type, final int id)
