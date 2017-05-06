@@ -25,6 +25,7 @@ public class RoseHandler extends AbstractHandler {
 	private final static Logger LOGGER = Logger.getLogger(RoseHandler.class);
 	
 	private final Map<String, Endpoint> endpoints = new HashMap<>();
+	private boolean enabled = true;
 	
 	public void registerEndpoint(final String path, final Endpoint endpoint)
 	{
@@ -38,6 +39,12 @@ public class RoseHandler extends AbstractHandler {
 	{
 		final String logContext = request.getMethod() + " at " + target + " from " + request.getRemoteHost();
 		LOGGER.info("request: " + logContext);
+		if(!enabled)
+		{
+			response.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
+			baseRequest.setHandled(true);
+			return;
+		}
 		final String[] path = target.substring(1).split("\\/",2);
 		final Endpoint endpoint = endpoints.get(path[0]);
 		if(endpoint == null)
@@ -89,6 +96,11 @@ public class RoseHandler extends AbstractHandler {
 		for(final Endpoint endpoint : endpoints.values())
 			status.putAll(endpoint.status());
 		return status;
+	}
+
+	public void setEnabled(boolean enabled)
+	{
+		this.enabled  = enabled;
 	}
 	
 }

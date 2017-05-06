@@ -82,11 +82,8 @@ public class HtmlTools {
 			.append(primitivesInputTable(entity, dto))
 			.append(entitiesInputTable(entity, dto))
 			.append(input("submit","", "Save"))
-			.append("</form><form method=\"post\" action=\"")
-			.append(path)
-			.append("/delete\">")
-			.append(input("submit", "", "Delete"))
-			.append("</form>");
+			.append("</form>")
+			.append(postButton(path + "/delete", "Delete"));
 		return hb.build();
 	}
 
@@ -103,10 +100,12 @@ public class HtmlTools {
 				.append(entry.getValue())
 				.append("</td></tr>");
 		hb.append("</table>");
+		hb.append(postButton("/web/restart", "Restart"));
+		hb.append(postButton("/web/stop", "Stop"));
 		return hb.build();
 	}
 	
-	private static String linkTo(final String text, final Object... path )
+	static String linkTo(final String text, final Object... path )
 	{
 		final StringBuilder sb = new StringBuilder("<a href=\"/web");
 		for(final Object subPath : path)
@@ -116,6 +115,17 @@ public class HtmlTools {
 				.append(text)
 				.append("</a>")
 				.toString();
+	}
+	
+	private static String postButton(final String path, final String label)
+	{
+		final StringBuilder sb = new StringBuilder();
+		sb.append("<form method=\"post\" action=\"");
+		sb.append(path);
+		sb.append("\">");
+		sb.append(input("submit", "", label));
+		sb.append("</form>");
+		return sb.toString();
 	}
 	
 	private static String input(final String type, final String name, final Object value)

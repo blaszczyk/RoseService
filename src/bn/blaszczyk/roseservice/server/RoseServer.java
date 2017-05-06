@@ -4,33 +4,55 @@ import org.eclipse.jetty.server.Server;
 
 import bn.blaszczyk.rosecommon.RoseException;
 
-public class RoseServer extends Server {
+public class RoseServer {
 
+	private final Server server;	
 	private final RoseHandler handler;
 
 	public RoseServer(final int port, final RoseHandler handler)
 	{
-		super(port);
 		this.handler = handler;
-		setHandler(handler);
+		server = new Server(port);
+		server.setHandler(handler);
 	}
 
 	public void startServer() throws RoseException
 	{
 		try
 		{
-			start();
-			join();
+			server.start();
+			server.join();
 		}
 		catch (Exception e)
 		{
 			throw new RoseException("Cannot start server " + this, e);
 		}
 	}
+
+	public void stopServer() throws RoseException
+	{
+		try
+		{
+			server.stop();
+		}
+		catch (Exception e)
+		{
+			throw new RoseException("Cannot stop server " + this, e);
+		}
+		finally
+		{
+			server.destroy();
+		}
+	}
 	
 	public RoseHandler getHandler()
 	{
 		return handler;
+	}
+
+	public void setEnabled(final boolean enabled)
+	{
+		handler.setEnabled(enabled);
 	}
 
 }

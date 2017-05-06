@@ -65,30 +65,44 @@ public class WebEndpoint implements Endpoint {
 	@Override
 	public int post(final String path, final HttpServletRequest request, final HttpServletResponse response) throws RoseException
 	{
-		final PathOptions pathOptions = new PathOptions(path);
-		if(!pathOptions.isValid() || !pathOptions.hasOptions())
-			return HttpServletResponse.SC_NOT_FOUND;
 		try
 		{
 			String responseString = "";
-			switch (pathOptions.getOptions()[0])
+			if(path.equals("stop"))
 			{
-			case "update":
-				final RoseDto updateDto = new RoseDto(request.getParameterMap());
-				client.putDto(updateDto);
-				responseString = buildEntityView(TypeManager.getEntity(updateDto.getType()), updateDto.getId());
-				break;
-			case "create":
-				RoseDto createDto = new RoseDto(request.getParameterMap());
-				createDto = client.postDto(createDto);
-				responseString = buildEntityEdit(TypeManager.getEntity(createDto.getType()), createDto.getId());
-				break;
-			case "delete":
-				client.deleteByID(pathOptions.getType().getSimpleName().toLowerCase(), pathOptions.getId());
-				responseString = buildEntitiesList(TypeManager.getEntity(pathOptions.getType()));
-				break;
-			default:
-				return HttpServletResponse.SC_NOT_FOUND;
+				client.postStopRequest();
+				responseString = new HtmlBuilder().h2("Server stopped").build();
+			}
+			else if(path.equals("restart"))
+			{
+				client.postRestartRequest();
+				responseString = new HtmlBuilder().h2("Server restarting").append(HtmlTools.linkTo("go to start")).build();
+			}
+			else
+			{
+				final PathOptions pathOptions = new PathOptions(path);
+				if(!pathOptions.isValid() || !pathOptions.hasOptions())
+					return HttpServletResponse.SC_NOT_FOUND;
+				
+				switch (pathOptions.getOptions()[0])
+				{
+				case "update":
+					final RoseDto updateDto = new RoseDto(request.getParameterMap());
+					client.putDto(updateDto);
+					responseString = buildEntityView(TypeManager.getEntity(updateDto.getType()), updateDto.getId());
+					break;
+				case "create":
+					RoseDto createDto = new RoseDto(request.getParameterMap());
+					createDto = client.postDto(createDto);
+					responseString = buildEntityEdit(TypeManager.getEntity(createDto.getType()), createDto.getId());
+					break;
+				case "delete":
+					client.deleteByID(pathOptions.getType().getSimpleName().toLowerCase(), pathOptions.getId());
+					responseString = buildEntitiesList(TypeManager.getEntity(pathOptions.getType()));
+					break;
+				default:
+					return HttpServletResponse.SC_NOT_FOUND;
+				}
 			}
 			response.getWriter().write(responseString);
 			return HttpServletResponse.SC_OK;
