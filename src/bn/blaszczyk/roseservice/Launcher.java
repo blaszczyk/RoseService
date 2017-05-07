@@ -28,7 +28,7 @@ public class Launcher {
 	{
 		hibernateController = new HibernateController();
 		cacheController = new CacheController(hibernateController);
-		controller = new ConsistencyController(cacheController);
+		controller = new ConsistencyDecorator(cacheController);
 		
 		handler = new RoseHandler();
 		server = new RoseServer(PORT, handler);

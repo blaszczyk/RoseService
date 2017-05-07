@@ -15,6 +15,7 @@ import bn.blaszczyk.rose.model.Entity;
 import bn.blaszczyk.rose.model.EntityField;
 import bn.blaszczyk.rosecommon.RoseException;
 import bn.blaszczyk.rosecommon.client.RoseClient;
+import bn.blaszczyk.rosecommon.client.ServiceConfigClient;
 import bn.blaszczyk.rosecommon.dto.PreferenceDto;
 import bn.blaszczyk.rosecommon.dto.RoseDto;
 import bn.blaszczyk.rosecommon.tools.TypeManager;
@@ -23,11 +24,13 @@ import bn.blaszczyk.roseservice.server.PathOptions;
 
 public class WebEndpoint implements Endpoint {
 	
-	private static RoseClient client;
+	private final RoseClient client;
+	private final ServiceConfigClient serviceConfigClient;
 	
 	public WebEndpoint(final String url)
 	{
 		client = new RoseClient(url);
+		serviceConfigClient = new ServiceConfigClient(url);
 	}
 	
 	@Override
@@ -71,18 +74,18 @@ public class WebEndpoint implements Endpoint {
 			String responseString = "";
 			if(path.equals("stop"))
 			{
-				client.postStopRequest();
+				serviceConfigClient.postStopRequest();
 				responseString = new HtmlBuilder().h2("Server stopped").build();
 			}
 			else if(path.equals("restart"))
 			{
-				client.postRestartRequest();
+				serviceConfigClient.postRestartRequest();
 				responseString = new HtmlBuilder().h2("Server restarting").append(HtmlTools.linkTo("go to start")).build();
 			}
 			else if(path.equals("server"))
 			{
 				final PreferenceDto dto = new PreferenceDto(request.getParameterMap());
-				client.putPreferences(dto);
+				serviceConfigClient.putPreferences(dto);
 				responseString = buildServerControls();
 			}
 			else
@@ -178,8 +181,8 @@ public class WebEndpoint implements Endpoint {
 	
 	private String buildServerControls() throws RoseException
 	{
-		final Map<String, String> status = client.getServerStatus();
-		final PreferenceDto preferences = client.getPreferences();
+		final Map<String, String> status = serviceConfigClient.getServerStatus();
+		final PreferenceDto preferences = serviceConfigClient.getPreferences();
 		return HtmlTools.serverControls(status,preferences);
 	}
 
