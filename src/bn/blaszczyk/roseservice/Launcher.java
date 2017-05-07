@@ -24,18 +24,6 @@ public class Launcher {
 	private RoseHandler handler;
 	private RoseServer server;
 	
-	private Launcher( final String[] args)
-	{
-		if(args.length == 0)
-		{
-			System.out.println("No Rose model file specified.");
-			System.exit(1);
-		}
-		TypeManager.parseRoseFile(Launcher.class.getClassLoader().getResourceAsStream(args[0]));
-		Preferences.setMainClass(RoseServer.class);
-		LoggerConfigurator.configureLogger(CommonPreference.BASE_DIRECTORY, CommonPreference.LOG_LEVEL);
-	}
-	
 	public void launch()
 	{
 		hibernateController = new HibernateController();
@@ -82,7 +70,15 @@ public class Launcher {
 	
 	public static void main(String[] args)
 	{
-		new Launcher(args).launch();
+		if(args.length == 0)
+		{
+			System.out.println("No Rose model file specified.");
+			System.exit(1);
+		}
+		TypeManager.parseRoseFile(Launcher.class.getClassLoader().getResourceAsStream(args[0]));
+		Preferences.setMainClass(RoseServer.class);
+		LoggerConfigurator.configureLogger(CommonPreference.BASE_DIRECTORY, CommonPreference.LOG_LEVEL);
+		new Launcher().launch();
 	}
 
 	public RoseServer getServer()

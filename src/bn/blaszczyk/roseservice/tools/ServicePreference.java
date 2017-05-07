@@ -1,7 +1,6 @@
 package bn.blaszczyk.roseservice.tools;
 
 import bn.blaszczyk.rosecommon.tools.Preference;
-import bn.blaszczyk.rosecommon.tools.Preference.Type;
 
 public enum ServicePreference implements Preference {
 	;

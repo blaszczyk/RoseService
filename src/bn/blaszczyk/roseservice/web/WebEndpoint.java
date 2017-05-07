@@ -15,6 +15,7 @@ import bn.blaszczyk.rose.model.Entity;
 import bn.blaszczyk.rose.model.EntityField;
 import bn.blaszczyk.rosecommon.RoseException;
 import bn.blaszczyk.rosecommon.client.RoseClient;
+import bn.blaszczyk.rosecommon.dto.PreferenceDto;
 import bn.blaszczyk.rosecommon.dto.RoseDto;
 import bn.blaszczyk.rosecommon.tools.TypeManager;
 import bn.blaszczyk.roseservice.server.Endpoint;
@@ -77,6 +78,12 @@ public class WebEndpoint implements Endpoint {
 			{
 				client.postRestartRequest();
 				responseString = new HtmlBuilder().h2("Server restarting").append(HtmlTools.linkTo("go to start")).build();
+			}
+			else if(path.equals("server"))
+			{
+				final PreferenceDto dto = new PreferenceDto(request.getParameterMap());
+				client.putPreferences(dto);
+				responseString = buildServerControls();
 			}
 			else
 			{
@@ -172,7 +179,8 @@ public class WebEndpoint implements Endpoint {
 	private String buildServerControls() throws RoseException
 	{
 		final Map<String, String> status = client.getServerStatus();
-		return HtmlTools.serverControls(status);
+		final PreferenceDto preferences = client.getPreferences();
+		return HtmlTools.serverControls(status,preferences);
 	}
 
 }

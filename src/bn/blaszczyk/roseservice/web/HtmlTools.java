@@ -7,7 +7,10 @@ import java.util.Map.Entry;
 import bn.blaszczyk.rose.model.Entity;
 import bn.blaszczyk.rose.model.EntityField;
 import bn.blaszczyk.rose.model.Field;
+import bn.blaszczyk.rosecommon.dto.PreferenceDto;
 import bn.blaszczyk.rosecommon.dto.RoseDto;
+import bn.blaszczyk.rosecommon.tools.CommonPreference;
+import bn.blaszczyk.rosecommon.tools.Preference;
 import bn.blaszczyk.rosecommon.tools.TypeManager;
 
 public class HtmlTools {
@@ -87,11 +90,12 @@ public class HtmlTools {
 		return hb.build();
 	}
 
-	public static String serverControls(final Map<String, String> status)
+	public static String serverControls(final Map<String, String> status, final PreferenceDto preferences)
 	{
 		final HtmlBuilder hb = new HtmlBuilder();
 		hb.append(linkTo("start"))
 			.h1("Server Controls")
+			.h2("Status")
 			.append("<table>");
 		for(final Entry<String,String> entry : status.entrySet())
 			hb.append("<tr><td>")
@@ -99,12 +103,17 @@ public class HtmlTools {
 				.append("</td><td>")
 				.append(entry.getValue())
 				.append("</td></tr>");
-		hb.append("</table>");
+		hb.append("</table>")
+			.h2("Configuration")
+			.append("<form method=\"post\" action=\"/web/server\">")
+			.append(preferencesInputTable(preferences))
+			.append(input("submit","", "Save"))
+			.append("</form>");
 		hb.append(postButton("/web/restart", "Restart"));
 		hb.append(postButton("/web/stop", "Stop"));
 		return hb.build();
 	}
-	
+
 	static String linkTo(final String text, final Object... path )
 	{
 		final StringBuilder sb = new StringBuilder("<a href=\"/web");
@@ -197,5 +206,17 @@ public class HtmlTools {
 		}
 		return sb.append("</table>").toString();
 	}
-	
+		
+	private static String preferencesInputTable(final PreferenceDto dto)
+	{
+		final StringBuilder sb = new StringBuilder("<table>");
+		for(final Preference preference : CommonPreference.class.getEnumConstants())
+			if(dto.containsPreference(preference))
+				sb.append("<tr><td>")
+					.append(preference.getKey())
+					.append("</td><td>")
+					.append(input("text",preference.getKey(), dto.get(preference)))
+					.append("</td></tr>");
+		return sb.append("</table>").toString();
+	}
 }
