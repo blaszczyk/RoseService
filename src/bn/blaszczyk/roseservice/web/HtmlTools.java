@@ -19,7 +19,7 @@ public class HtmlTools {
 	{
 		final HtmlBuilder hb = new HtmlBuilder();
 		hb.append(linkTo("Server", "server"))
-			.h1(TypeManager.getMainClass().getSimpleName());
+			.h1("Start");
 		for(Class<?> type : TypeManager.getEntityClasses())
 		{
 			final String name = type.getSimpleName();
