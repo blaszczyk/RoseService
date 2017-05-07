@@ -210,7 +210,7 @@ public class HtmlTools {
 	private static String preferencesInputTable(final PreferenceDto dto)
 	{
 		final StringBuilder sb = new StringBuilder("<table>");
-		for(final Preference preference : CommonPreference.class.getEnumConstants())
+		for(final Preference preference : CommonPreference.values())
 			if(dto.containsPreference(preference))
 				sb.append("<tr><td>")
 					.append(preference.getKey())

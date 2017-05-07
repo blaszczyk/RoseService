@@ -84,7 +84,7 @@ public class ServerEndpoint implements Endpoint {
 				final String requestString = URLDecoder.decode(encodedRequestString, CODING_CHARSET);
 				final StringMap<?> stringMap = GSON.fromJson(requestString, StringMap.class);
 				final PreferenceDto dto = new PreferenceDto(stringMap);
-				Arrays.stream(CommonPreference.class.getEnumConstants())
+				Arrays.stream(CommonPreference.values())
 						.filter(dto::containsPreference)
 						.forEach(p -> putValue(p, dto.get(p)));
 			}
@@ -116,7 +116,7 @@ public class ServerEndpoint implements Endpoint {
 	private PreferenceDto createAllPreferencesDto()
 	{
 		final PreferenceDto dto = new PreferenceDto();
-		Arrays.stream(CommonPreference.class.getEnumConstants())
+		Arrays.stream(CommonPreference.values())
 				.forEach(p -> dto.put(p, getValue(p)));
 		return dto;
 	}

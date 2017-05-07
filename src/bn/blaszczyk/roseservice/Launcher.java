@@ -1,4 +1,6 @@
- package bn.blaszczyk.roseservice;
+package bn.blaszczyk.roseservice;
+
+import java.util.Arrays;
 
 import org.apache.log4j.Logger;
 
@@ -10,6 +12,7 @@ import bn.blaszczyk.rosecommon.tools.Preferences;
 import bn.blaszczyk.rosecommon.tools.TypeManager;
 import bn.blaszczyk.roseservice.calculator.CalculatorEndpoint;
 import bn.blaszczyk.roseservice.server.*;
+import bn.blaszczyk.roseservice.tools.ServicePreference;
 import bn.blaszczyk.roseservice.web.WebEndpoint;
 import bn.blaszczyk.rose.model.Readable;
 
@@ -75,8 +78,10 @@ public class Launcher {
 			System.out.println("No Rose model file specified.");
 			System.exit(1);
 		}
-		TypeManager.parseRoseFile(Launcher.class.getClassLoader().getResourceAsStream(args[0]));
+		final String[] subArgs = Arrays.copyOfRange(args, 1, args.length);
 		Preferences.setMainClass(RoseServer.class);
+		Preferences.cacheArguments(subArgs, CommonPreference.values(), ServicePreference.values());
+		TypeManager.parseRoseFile(Launcher.class.getClassLoader().getResourceAsStream(args[0]));
 		LoggerConfigurator.configureLogger(CommonPreference.BASE_DIRECTORY, CommonPreference.LOG_LEVEL);
 		new Launcher().launch();
 	}
