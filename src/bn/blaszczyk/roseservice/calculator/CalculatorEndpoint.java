@@ -1,8 +1,6 @@
 package bn.blaszczyk.roseservice.calculator;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
@@ -14,11 +12,8 @@ import javax.servlet.http.HttpServletResponse;
 
 import bn.blaszczyk.rosecommon.RoseException;
 import bn.blaszczyk.roseservice.server.Endpoint;
-import bn.blaszczyk.roseservice.web.HtmlBuilder;
 
 public class CalculatorEndpoint implements Endpoint {
-	
-	private static final String IMG_TAG = "<img src=\"calculator.png\" alt=\"Calculator\" style=\"width:32px;height:32px;\">";
 
 	private static final Pattern LONG_PATTERN = Pattern.compile("\\([0-9\\*\\+\\-]*\\)");
 	
@@ -32,26 +27,14 @@ public class CalculatorEndpoint implements Endpoint {
         response.setContentType("text/html; charset=utf-8");
         try
         {
-        	if(path.contains("favicon.ico"))
-        	{
-        		Files.copy(new File("C:/Users/Michael/Desktop/Java Projects/RoseService/calculator.ico").toPath(), response.getOutputStream());
-        		return HttpServletResponse.SC_OK;
-        	}
-        	if(path.contains("calculator.png"))
-        	{
-        		Files.copy(new File("C:/Users/Michael/Desktop/Java Projects/RoseService/calculator.png").toPath(), response.getOutputStream());
-        		return HttpServletResponse.SC_OK;
-        	}
         	final String responseString;
             if(validateLong(path))
             	responseString = evaluateRequestLong(path);
             else if(validateDouble(path))
             	responseString = evaluateRequestDouble(path);
             else
-            	responseString = "invalid request: " + path;
-            final HtmlBuilder hb = new HtmlBuilder();
-            hb.append(IMG_TAG).h2(responseString);
-            response.getWriter().write(hb.build());
+            	return HttpServletResponse.SC_BAD_REQUEST;
+            response.getWriter().write(responseString);
         }
         catch(Exception e)
         {
@@ -81,7 +64,7 @@ public class CalculatorEndpoint implements Endpoint {
 	@Override
 	public Map<String, String> status()
 	{
-		return Collections.singletonMap("endpoint: /calc", "active");
+		return Collections.singletonMap("endpoint /calc", "active");
 	}
 
 	private String evaluateRequestLong(String target) throws IOException
@@ -89,7 +72,7 @@ public class CalculatorEndpoint implements Endpoint {
 		final String requestString = target.replaceAll("\\s+", "")
 				.replaceAll("(?<=[0-9])\\(", "*(")
 				.replaceAll("\\)(?=[0-9])", ")*");
-		return requestString + "=" + evaluateLong(requestString);
+		return String.valueOf(evaluateLong(requestString));
 	}
 
 	private String evaluateRequestDouble(String target) throws IOException
@@ -97,7 +80,7 @@ public class CalculatorEndpoint implements Endpoint {
 		final String requestString = target.replaceAll("\\s+", "")
 				.replaceAll("(?<=[0-9])\\(", "*(")
 				.replaceAll("\\)(?=[0-9])", ")*");
-		return requestString + "=" + evaluateDouble(requestString);
+		return String.valueOf(evaluateDouble(requestString));
 	}
 	
 	private static long evaluateLong(final String expression)

@@ -16,6 +16,7 @@ import com.google.gson.internal.StringMap;
 import bn.blaszczyk.rosecommon.RoseException;
 import bn.blaszczyk.rosecommon.dto.PreferenceDto;
 import bn.blaszczyk.rosecommon.tools.CommonPreference;
+import bn.blaszczyk.rosecommon.tools.Preferences;
 import bn.blaszczyk.roseservice.Launcher;
 
 import static bn.blaszczyk.rosecommon.tools.Preferences.*;
@@ -40,17 +41,18 @@ public class ServerEndpoint implements Endpoint {
 		try
 		{
 			String responseString = "";
-			switch(path)
+			if(path.equals("status"))
 			{
-			case "status":
 				final Map<String,String> status = server.getHandler().getStatus();
 				responseString = GSON.toJson(status);
-				break;
-			case "config":
+			}
+			else if(path.equals("config"))
+			{
 				final PreferenceDto dto = createAllPreferencesDto();
 				responseString = GSON.toJson(dto);
-				break;
 			}
+			else
+				return HttpServletResponse.SC_NOT_FOUND;
 			final String encodedResponceString = URLEncoder.encode(responseString, CODING_CHARSET);
 			response.getWriter().write(encodedResponceString);
 			return HttpServletResponse.SC_OK;
@@ -111,12 +113,12 @@ public class ServerEndpoint implements Endpoint {
 		status.put("endpoint /server", "active");
 		return status;
 	}
-
 	
 	private PreferenceDto createAllPreferencesDto()
 	{
 		final PreferenceDto dto = new PreferenceDto();
-		Arrays.stream(CommonPreference.values())
+		Arrays.stream(launcher.getPreferences())
+				.flatMap(Arrays::stream)
 				.forEach(p -> dto.put(p, getValue(p)));
 		return dto;
 	}
@@ -130,7 +132,6 @@ public class ServerEndpoint implements Endpoint {
 		}
 		catch (InterruptedException e)
 		{
-			e.printStackTrace();
 		}
 		launcher.stop();
 	}
@@ -146,6 +147,7 @@ public class ServerEndpoint implements Endpoint {
 		{
 		}
 		launcher.stop();
+		Preferences.clearCache();
 		try
 		{
 			Thread.sleep(2000);
