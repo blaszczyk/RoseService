@@ -13,6 +13,8 @@ import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.AbstractHandler;
 
 import bn.blaszczyk.rosecommon.RoseException;
+import bn.blaszczyk.rosecommon.tools.Preference;
+import bn.blaszczyk.rosecommon.tools.Preferences;
 import bn.blaszczyk.roseservice.web.HtmlBuilder;
 
 public class RoseHandler extends AbstractHandler {
@@ -27,8 +29,11 @@ public class RoseHandler extends AbstractHandler {
 	private final Map<String, Endpoint> endpoints = new HashMap<>();
 	private boolean enabled = true;
 	
-	public void registerEndpoint(final String path, final Endpoint endpoint)
+	public void registerEndpointOptional(final String path, final Endpoint endpoint, final Preference optionalityPreference)
 	{
+		if(optionalityPreference != null)
+			if(! Preferences.getBooleanValue(optionalityPreference) )
+				return;
 		LOGGER.info("registering endpoint " + endpoint.getClass().getSimpleName() + " at /" + path);
 		endpoints.put(path, endpoint);
 	}

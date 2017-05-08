@@ -17,9 +17,13 @@ import bn.blaszczyk.roseservice.tools.ServicePreference;
 import bn.blaszczyk.roseservice.web.WebEndpoint;
 import bn.blaszczyk.rose.model.Readable;
 
+import static bn.blaszczyk.rosecommon.tools.Preferences.*;
+import static bn.blaszczyk.rosecommon.tools.CommonPreference.*;
+import static bn.blaszczyk.roseservice.tools.ServicePreference.*;
+
 public class Launcher {
 	
-	private static final int PORT = 4053;
+	private static final Logger LOGGER = Logger.getLogger(Launcher.class);
 	
 	private static final Preference[][] PREFERENCES = new Preference[][]{ServicePreference.values(),CommonPreference.values()};
 
@@ -30,6 +34,8 @@ public class Launcher {
 	private RoseHandler handler;
 	private RoseServer server;
 	
+	private Integer port;
+	
 	public void launch()
 	{
 		hibernateController = new HibernateController();
@@ -37,24 +43,33 @@ public class Launcher {
 		controller = new ConsistencyDecorator(cacheController);
 		
 		handler = new RoseHandler();
-		server = new RoseServer(PORT, handler);
 		
-		handler.registerEndpoint("entity", new EntityEndpoint(controller));
-		handler.registerEndpoint("web", new WebEndpoint("http://localhost:" + PORT));
-		handler.registerEndpoint("server", new ServerEndpoint(this));
-		handler.registerEndpoint("calc", new CalculatorEndpoint());
-		handler.registerEndpoint("file", new FileEndpoint());
+		port = getIntegerValue(SERVICE_PORT);
+		server = new RoseServer(port, handler);
+		
+		registerEndpoints();
+		
+		new Thread(this::preloadEntities).start();
 		
 		try
 		{
 			server.startServer();
-			for(Class<? extends Readable> type : TypeManager.getEntityClasses())
-				cacheController.getEntities(type);
 		}
 		catch(RoseException e)
 		{
-			Logger.getLogger(Launcher.class).error("Error starting rose service", e);
+			LOGGER.error("Error starting rose service", e);
 		}
+		
+		
+	}
+
+	private void registerEndpoints()
+	{
+		handler.registerEndpointOptional("entity", new EntityEndpoint(controller),ENTITY_ENDPOINT_ACTIVE);
+		handler.registerEndpointOptional("server", new ServerEndpoint(this),SERVICE_ENDPOINT_ACTIVE);
+		handler.registerEndpointOptional("web", new WebEndpoint("http://localhost:" + port),WEB_ENDPOINT_ACTIVE);
+		handler.registerEndpointOptional("calc", new CalculatorEndpoint(),CALC_ENDPOINT_ACTIVE);
+		handler.registerEndpointOptional("file", new FileEndpoint(),FILE_ENDPOINT_ACTIVE);
 	}
 	
 	public void stop()
@@ -66,7 +81,7 @@ public class Launcher {
 		}
 		catch (RoseException e)
 		{
-			Logger.getLogger(Launcher.class).error("Error stopping rose service", e);
+			LOGGER.error("Error stopping rose service", e);
 		}
 		server = null;
 		handler = null;
@@ -98,6 +113,19 @@ public class Launcher {
 		TypeManager.parseRoseFile(Launcher.class.getClassLoader().getResourceAsStream(args[0]));
 		LoggerConfigurator.configureLogger(CommonPreference.BASE_DIRECTORY, CommonPreference.LOG_LEVEL);
 		new Launcher().launch();
+	}
+
+	private void preloadEntities()
+	{
+		try
+		{
+			for(Class<? extends Readable> type : TypeManager.getEntityClasses())
+				cacheController.getEntities(type);
+		}
+		catch (RoseException e) 
+		{
+			LOGGER.error("error preloading entities", e);
+		}
 	}
 	
 }

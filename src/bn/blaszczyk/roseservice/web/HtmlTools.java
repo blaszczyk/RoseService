@@ -12,6 +12,7 @@ import bn.blaszczyk.rosecommon.dto.RoseDto;
 import bn.blaszczyk.rosecommon.tools.CommonPreference;
 import bn.blaszczyk.rosecommon.tools.Preference;
 import bn.blaszczyk.rosecommon.tools.TypeManager;
+import bn.blaszczyk.roseservice.tools.ServicePreference;
 
 public class HtmlTools {
 
@@ -104,13 +105,13 @@ public class HtmlTools {
 				.append(entry.getValue())
 				.append("</td></tr>");
 		hb.append("</table>")
+			.append(postButton("/web/restart", "Restart"))
+			.append(postButton("/web/stop", "Stop"))
 			.h2("Configuration")
 			.append("<form method=\"post\" action=\"/web/server\">")
 			.append(preferencesInputTable(preferences))
 			.append(input("submit","", "Save"))
 			.append("</form>");
-		hb.append(postButton("/web/restart", "Restart"));
-		hb.append(postButton("/web/stop", "Stop"));
 		return hb.build();
 	}
 
@@ -211,6 +212,13 @@ public class HtmlTools {
 	{
 		final StringBuilder sb = new StringBuilder("<table>");
 		for(final Preference preference : CommonPreference.values())
+			if(dto.containsPreference(preference))
+				sb.append("<tr><td>")
+					.append(preference.getKey())
+					.append("</td><td>")
+					.append(input("text",preference.getKey(), dto.get(preference)))
+					.append("</td></tr>");
+		for(final Preference preference : ServicePreference.values())
 			if(dto.containsPreference(preference))
 				sb.append("<tr><td>")
 					.append(preference.getKey())
