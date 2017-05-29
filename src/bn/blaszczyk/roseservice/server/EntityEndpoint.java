@@ -31,7 +31,7 @@ import bn.blaszczyk.rosecommon.dto.RoseDto;
 import bn.blaszczyk.rosecommon.tools.EntityUtils;
 import bn.blaszczyk.rosecommon.tools.TypeManager;
 
-import static bn.blaszczyk.rosecommon.client.RoseClient.CODING_CHARSET;
+import static bn.blaszczyk.rosecommon.client.CommonClient.CODING_CHARSET;
 
 public class EntityEndpoint implements Endpoint {
 

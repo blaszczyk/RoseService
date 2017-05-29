@@ -63,7 +63,7 @@ public class Launcher {
 		
 	}
 
-	private void registerEndpoints()
+	protected void registerEndpoints()
 	{
 		handler.registerEndpointOptional("entity", new EntityEndpoint(controller),ENTITY_ENDPOINT_ACTIVE);
 		handler.registerEndpointOptional("server", new ServerEndpoint(this),SERVICE_ENDPOINT_ACTIVE);
@@ -93,6 +93,11 @@ public class Launcher {
 	public RoseServer getServer()
 	{
 		return server;
+	}
+
+	public ModelController getController()
+	{
+		return controller;
 	}
 	
 	public Preference[][] getPreferences()

@@ -30,7 +30,7 @@ public class WebEndpoint implements Endpoint {
 	public WebEndpoint(final String url)
 	{
 		client = new RoseClient(url);
-		serviceConfigClient = new ServiceConfigClient(url);
+		serviceConfigClient = ServiceConfigClient.newInstance(url);
 	}
 	
 	@Override

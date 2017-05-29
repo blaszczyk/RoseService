@@ -14,13 +14,16 @@ import com.google.gson.Gson;
 import com.google.gson.internal.StringMap;
 
 import bn.blaszczyk.rosecommon.RoseException;
+import bn.blaszczyk.rosecommon.client.CommonClient;
+import bn.blaszczyk.rosecommon.client.FileClient;
+import bn.blaszczyk.rosecommon.client.ServiceConfigClient;
 import bn.blaszczyk.rosecommon.dto.PreferenceDto;
 import bn.blaszczyk.rosecommon.tools.CommonPreference;
 import bn.blaszczyk.rosecommon.tools.Preferences;
 import bn.blaszczyk.roseservice.Launcher;
 
 import static bn.blaszczyk.rosecommon.tools.Preferences.*;
-import static bn.blaszczyk.rosecommon.client.RoseClient.CODING_CHARSET;
+import static bn.blaszczyk.rosecommon.client.CommonClient.CODING_CHARSET;
 
 public class ServerEndpoint implements Endpoint {
 	
@@ -134,6 +137,9 @@ public class ServerEndpoint implements Endpoint {
 		{
 		}
 		launcher.stop();
+		CommonClient.closeInstance();
+		FileClient.closeInstance();
+		ServiceConfigClient.closeInstance();
 	}
 
 	private void restartThreaded()

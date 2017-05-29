@@ -22,7 +22,7 @@ public class FileEndpoint implements Endpoint {
 		try
 		{
 			final boolean existsRequest = request.getParameterMap().containsKey("exists");
-			final File file = converter.fromPath(path);
+			final File file = fileOf(path);
 			if(existsRequest)
 				response.getWriter().write(Boolean.toString(file.exists()));
 			else
@@ -50,7 +50,7 @@ public class FileEndpoint implements Endpoint {
 	{
 		try
 		{
-			final File file = converter.fromPath(path);
+			final File file = fileOf(path);
 			if(!file.isFile())
 				return HttpServletResponse.SC_NOT_FOUND;
 			Files.copy(request.getInputStream(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
@@ -67,7 +67,7 @@ public class FileEndpoint implements Endpoint {
 	{
 		try
 		{
-			final File file = converter.fromPath(path);
+			final File file = fileOf(path);
 			if(!file.exists())
 				return HttpServletResponse.SC_NOT_FOUND;
 			file.delete();
@@ -77,6 +77,11 @@ public class FileEndpoint implements Endpoint {
 			throw RoseException.wrap(e, "Error DELETE@/file");
 		}
 		return HttpServletResponse.SC_NO_CONTENT;
+	}
+	
+	private File fileOf(final String path) throws RoseException
+	{
+		return converter.fromPath(path);
 	}
 
 	@Override

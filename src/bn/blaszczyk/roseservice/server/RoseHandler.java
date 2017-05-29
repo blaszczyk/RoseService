@@ -58,7 +58,7 @@ public class RoseHandler extends AbstractHandler {
 			baseRequest.setHandled(true);
 			return;
 		}
-		final int responseCode;
+		int responseCode = HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
 		final String method = request.getMethod();
 		final String subPath = path.length == 2 ? path[1] : "";
 		try
@@ -80,16 +80,17 @@ public class RoseHandler extends AbstractHandler {
 			default:
 				responseCode = HttpServletResponse.SC_BAD_REQUEST;
 			}
-			response.setStatus(responseCode);
 		}
 		catch(RoseException e)
 		{
-			response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 			response.getWriter().write(new HtmlBuilder().h2("internal server error").append(e.getFullMessage()).build());
 			LOGGER.error("internal server error", e);
 		}
 		finally
 		{
+			response.setStatus(responseCode);
+			if(responseCode >= 300)
+				LOGGER.error( "responding " + responseCode + " to " + logContext);
 			baseRequest.setHandled(true);
 			LOGGER.debug("request handled: " + logContext);
 		}
