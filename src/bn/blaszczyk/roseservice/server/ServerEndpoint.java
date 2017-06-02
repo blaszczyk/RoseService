@@ -18,7 +18,6 @@ import bn.blaszczyk.rosecommon.client.CommonClient;
 import bn.blaszczyk.rosecommon.client.FileClient;
 import bn.blaszczyk.rosecommon.client.ServiceConfigClient;
 import bn.blaszczyk.rosecommon.dto.PreferenceDto;
-import bn.blaszczyk.rosecommon.tools.CommonPreference;
 import bn.blaszczyk.rosecommon.tools.Preferences;
 import bn.blaszczyk.roseservice.Launcher;
 
@@ -89,7 +88,8 @@ public class ServerEndpoint implements Endpoint {
 				final String requestString = URLDecoder.decode(encodedRequestString, CODING_CHARSET);
 				final StringMap<?> stringMap = GSON.fromJson(requestString, StringMap.class);
 				final PreferenceDto dto = new PreferenceDto(stringMap);
-				Arrays.stream(CommonPreference.values())
+				Arrays.stream(launcher.getPreferences())
+						.flatMap(Arrays::stream)
 						.filter(dto::containsPreference)
 						.forEach(p -> putValue(p, dto.get(p)));
 			}

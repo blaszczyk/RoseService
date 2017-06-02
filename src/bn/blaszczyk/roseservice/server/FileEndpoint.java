@@ -1,15 +1,19 @@
 package bn.blaszczyk.roseservice.server;
 
 import java.io.File;
+import java.net.URLEncoder;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import bn.blaszczyk.rosecommon.RoseException;
+import bn.blaszczyk.rosecommon.client.CommonClient;
 import bn.blaszczyk.rosecommon.tools.FileConverter;
 
 public class FileEndpoint implements Endpoint {
@@ -29,7 +33,15 @@ public class FileEndpoint implements Endpoint {
 			{
 				if(!file.exists())
 					return HttpServletResponse.SC_NOT_FOUND;
-				Files.copy(file.toPath(), response.getOutputStream());
+				if(file.isDirectory())
+				{
+					final String subFiles = Arrays.stream(file.listFiles())
+							.map(File::getName)
+							.collect(Collectors.joining(","));
+					response.getWriter().write(URLEncoder.encode(subFiles, CommonClient.CODING_CHARSET));
+				}
+				else
+					Files.copy(file.toPath(), response.getOutputStream());
 			}
 		}
 		catch (final Exception e) 
@@ -51,8 +63,8 @@ public class FileEndpoint implements Endpoint {
 		try
 		{
 			final File file = fileOf(path);
-			if(!file.isFile())
-				return HttpServletResponse.SC_NOT_FOUND;
+			if(!file.exists())
+				file.getParentFile().mkdirs();
 			Files.copy(request.getInputStream(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
 		}
 		catch (final Exception e) 
