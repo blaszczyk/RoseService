@@ -8,7 +8,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.AbstractHandler;
 
@@ -24,7 +24,7 @@ public class RoseHandler extends AbstractHandler {
 	private final static String PUT = "PUT";
 	private final static String DELETE = "DELETE";
 	
-	private final static Logger LOGGER = Logger.getLogger(RoseHandler.class);
+	private final static Logger LOGGER = LogManager.getLogger(RoseHandler.class);
 	
 	private final Map<String, Endpoint> endpoints = new HashMap<>();
 	private boolean enabled = true;

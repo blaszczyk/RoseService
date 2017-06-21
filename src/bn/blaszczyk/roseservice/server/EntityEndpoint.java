@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 import com.google.gson.Gson;
 import com.google.gson.internal.StringMap;
@@ -35,7 +35,7 @@ import static bn.blaszczyk.rosecommon.client.CommonClient.CODING_CHARSET;
 
 public class EntityEndpoint implements Endpoint {
 
-	private static final Logger LOGGER = Logger.getLogger(EntityEndpoint.class);
+	private static final Logger LOGGER = LogManager.getLogger(EntityEndpoint.class);
 	
 	private static final Gson GSON = new Gson();
 	

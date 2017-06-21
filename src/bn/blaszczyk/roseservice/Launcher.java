@@ -2,7 +2,7 @@ package bn.blaszczyk.roseservice;
 
 import java.util.Arrays;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 import bn.blaszczyk.rosecommon.RoseException;
 import bn.blaszczyk.rosecommon.controller.*;
@@ -23,11 +23,11 @@ import static bn.blaszczyk.roseservice.tools.ServicePreference.*;
 
 public class Launcher {
 	
-	private static final Logger LOGGER = Logger.getLogger(Launcher.class);
+	private static final Logger LOGGER = LogManager.getLogger(Launcher.class);
 	
 	private static final Preference[][] PREFERENCES = new Preference[][]{ServicePreference.values(),CommonPreference.values()};
 
-	private HibernateController hibernateController;
+	private PersistenceController hibernateController;
 	private CacheController cacheController;
 	private ModelController controller;
 	
@@ -36,9 +36,9 @@ public class Launcher {
 	
 	private Integer port;
 	
-	public void launch()
+	public void launch() throws RoseException
 	{
-		hibernateController = new HibernateController();
+		hibernateController = new PersistenceController();
 		cacheController = new CacheController(hibernateController);
 		controller = new ConsistencyDecorator(cacheController);
 		
@@ -117,7 +117,14 @@ public class Launcher {
 		Preferences.cacheArguments(subArgs, PREFERENCES);
 		TypeManager.parseRoseFile(Launcher.class.getClassLoader().getResourceAsStream(args[0]));
 		LoggerConfigurator.configureLogger(CommonPreference.BASE_DIRECTORY, CommonPreference.LOG_LEVEL);
-		new Launcher().launch();
+		try 
+		{
+			new Launcher().launch();
+		}
+		catch (RoseException e) 
+		{
+			LogManager.getLogger(Launcher.class).error("Error launching Service",e);
+		}
 	}
 
 	private void preloadEntities()

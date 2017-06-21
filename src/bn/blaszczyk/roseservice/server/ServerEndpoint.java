@@ -10,6 +10,8 @@ import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.logging.log4j.LogManager;
+
 import com.google.gson.Gson;
 import com.google.gson.internal.StringMap;
 
@@ -140,6 +142,7 @@ public class ServerEndpoint implements Endpoint {
 		CommonClient.closeInstance();
 		FileClient.closeInstance();
 		ServiceConfigClient.closeInstance();
+		System.exit(0);
 	}
 
 	private void restartThreaded()
@@ -161,6 +164,13 @@ public class ServerEndpoint implements Endpoint {
 		catch (InterruptedException e)
 		{
 		}
-		launcher.launch();
+		try
+		{
+			launcher.launch();
+		}
+		catch (RoseException e) 
+		{
+			LogManager.getLogger(ServerEndpoint.class).error("Error restarting service", e);
+		}
 	}
 }
