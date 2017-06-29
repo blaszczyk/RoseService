@@ -74,9 +74,9 @@ public class Launcher {
 	
 	public void stop()
 	{
-		controller.close();
 		try
 		{
+			controller.close();
 			server.stopServer();
 		}
 		catch (RoseException e)
