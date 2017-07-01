@@ -71,9 +71,9 @@ public class ServerEndpoint implements Endpoint {
 	public int post(final String path, final HttpServletRequest request, final HttpServletResponse response) throws RoseException
 	{
 		if(path.equals("stop"))
-			new Thread(()->stopThreaded()).start();
+			new Thread(()->stopThreaded(),"Thread-stop-server").start();
 		else if(path.equals("restart"))
-			new Thread(()->restartThreaded()).start();
+			new Thread(()->restartThreaded(),"Thread-restart-server").start();
 		else
 			return HttpServletResponse.SC_NOT_FOUND;
 		return HttpServletResponse.SC_NO_CONTENT;

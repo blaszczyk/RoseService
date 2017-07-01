@@ -15,7 +15,6 @@ import org.eclipse.jetty.server.handler.AbstractHandler;
 import bn.blaszczyk.rosecommon.RoseException;
 import bn.blaszczyk.rosecommon.tools.Preference;
 import bn.blaszczyk.rosecommon.tools.Preferences;
-import bn.blaszczyk.roseservice.web.HtmlBuilder;
 
 public class RoseHandler extends AbstractHandler {
 
@@ -56,6 +55,7 @@ public class RoseHandler extends AbstractHandler {
 		{
 			response.setStatus(HttpServletResponse.SC_NOT_FOUND);
 			baseRequest.setHandled(true);
+			LOGGER.warn("Endpoint not found: " + logContext);
 			return;
 		}
 		int responseCode = HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
@@ -83,7 +83,12 @@ public class RoseHandler extends AbstractHandler {
 		}
 		catch(RoseException e)
 		{
-			response.getWriter().write(new HtmlBuilder().h2("internal server error").append(e.getFullMessage()).build());
+			response.getWriter().write(e.getFullMessage());
+			LOGGER.error("internal server error", e);
+		}
+		catch(Exception e)
+		{
+			response.getWriter().write(e.getMessage());
 			LOGGER.error("internal server error", e);
 		}
 		finally

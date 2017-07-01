@@ -49,7 +49,7 @@ public class Launcher {
 		
 		registerEndpoints();
 		
-		new Thread(this::preloadEntities).start();
+		new Thread(this::preloadEntities,"Thread-Load-Entities").start();
 		
 		try
 		{
