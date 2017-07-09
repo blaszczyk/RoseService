@@ -27,12 +27,16 @@ public class RoseHandler extends AbstractHandler {
 	
 	private final Map<String, Endpoint> endpoints = new HashMap<>();
 	private boolean enabled = true;
-	
+
 	public void registerEndpointOptional(final String path, final Endpoint endpoint, final Preference optionalityPreference)
 	{
 		if(optionalityPreference != null)
 			if(! Preferences.getBooleanValue(optionalityPreference) )
 				return;
+		registerEndpoint(path, endpoint);
+	}
+	public void registerEndpoint(final String path, final Endpoint endpoint)
+	{
 		LOGGER.info("registering endpoint " + endpoint.getClass().getSimpleName() + " at /" + path);
 		endpoints.put(path, endpoint);
 	}

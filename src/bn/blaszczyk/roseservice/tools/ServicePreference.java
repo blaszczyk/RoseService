@@ -8,9 +8,9 @@ public enum ServicePreference implements Preference {
 
 	ENTITY_ENDPOINT_ACTIVE(BOOLEAN,"entityendpointactive",true,true),
 	SERVICE_ENDPOINT_ACTIVE(BOOLEAN,"serviceendpointactive",true,true),
-	WEB_ENDPOINT_ACTIVE(BOOLEAN,"webendpointactive",false,true),
+	WEB_ENDPOINT_ACTIVE(BOOLEAN,"webendpointactive",true,true),
 	CALC_ENDPOINT_ACTIVE(BOOLEAN,"calcendpointactive",false,true),
-	FILE_ENDPOINT_ACTIVE(BOOLEAN,"fileendpointactive",false,true);
+	FILE_ENDPOINT_ACTIVE(BOOLEAN,"fileendpointactive",true,true);
 	
 	private final Type type;
 	private final String key;
