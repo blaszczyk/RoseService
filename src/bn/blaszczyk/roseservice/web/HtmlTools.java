@@ -19,12 +19,12 @@ public class HtmlTools {
 	public static String startPage()
 	{
 		final HtmlBuilder hb = new HtmlBuilder();
-		hb.append(linkTo("Server", "server"))
+		hb.append(linkToWeb("Server", "server"))
 			.h1("Start");
 		for(Class<?> type : TypeManager.getEntityClasses())
 		{
 			final String name = type.getSimpleName();
-			hb.append(linkTo(name, name.toLowerCase()))
+			hb.append(linkToWeb(name, name.toLowerCase()))
 				.append("<br>");
 		}
 		return hb.build();
@@ -33,7 +33,7 @@ public class HtmlTools {
 	public static String entityList(final Entity entity, final List<RoseDto> dtos)
 	{
 		final HtmlBuilder hb = new HtmlBuilder();
-		hb.append(linkTo("start"))
+		hb.append(linkToWeb("start"))
 			.h1(entity.getSimpleClassName())
 			.append("<form method=\"post\" action=\"/web/" + entity.getObjectName() + "/create\">")
 			.append(input("submit", "", "create"))
@@ -46,11 +46,11 @@ public class HtmlTools {
 	public static String entityView(final Entity entity, final RoseDto dto, final List<List<RoseDto>> subDtos)
 	{
 		final HtmlBuilder hb = new HtmlBuilder();
-		hb.append(linkTo("start"))
+		hb.append(linkToWeb("start"))
 			.append(" - ")
-			.append(linkTo(entity.getSimpleClassName(), entity.getObjectName()))
+			.append(linkToWeb(entity.getSimpleClassName(), entity.getObjectName()))
 			.append(" - ")
-			.append(linkTo("edit", entity.getObjectName(), dto.getId(), "update"))
+			.append(linkToWeb("edit", entity.getObjectName(), dto.getId(), "update"))
 			.h1(entity.getSimpleClassName() + " id=" + dto.getId())
 			.append(primitivesTable(entity, dto));
 		for(int i = 0; i < entity.getEntityFields().size(); i++)
@@ -65,7 +65,7 @@ public class HtmlTools {
 			else
 			{
 				final RoseDto subDto = dtos.get(0);
-				hb.h2(linkTo(field.getCapitalName(), field.getEntity().getObjectName(), subDto.getId()))
+				hb.h2(linkToWeb(field.getCapitalName(), field.getEntity().getObjectName(), subDto.getId()))
 					.append(primitivesTable(field.getEntity(), subDto));
 			}
 		}
@@ -77,7 +77,7 @@ public class HtmlTools {
 		final String path = "/web/" + entity.getObjectName() + "/" + dto.getId();
 		final HtmlBuilder hb = new HtmlBuilder();
 		hb.h1(entity.getSimpleClassName() + " id=" + dto.getId())
-			.append(linkTo("Cancel", entity.getObjectName(), dto.getId()))
+			.append(linkToWeb("Cancel", entity.getObjectName(), dto.getId()))
 			.append("<form method=\"post\" action=\"")
 			.append(path)
 			.append("/update\">")
@@ -94,7 +94,7 @@ public class HtmlTools {
 	public static String serverControls(final Map<String, String> status, final PreferenceDto preferences)
 	{
 		final HtmlBuilder hb = new HtmlBuilder();
-		hb.append(linkTo("start"))
+		hb.append(linkToWeb("start"))
 			.h1("Server Controls")
 			.h2("Status")
 			.append("<table>");
@@ -115,7 +115,7 @@ public class HtmlTools {
 		return hb.build();
 	}
 
-	static String linkTo(final String text, final Object... path )
+	public static String linkToWeb(final String text, final Object... path )
 	{
 		final StringBuilder sb = new StringBuilder("<a href=\"/web");
 		for(final Object subPath : path)
@@ -127,7 +127,19 @@ public class HtmlTools {
 				.toString();
 	}
 	
-	private static String postButton(final String path, final String label)
+	public static String linkTo(final String text, final Object... path )
+	{
+		final StringBuilder sb = new StringBuilder("<a href=\"");
+		for(final Object subPath : path)
+			sb.append("/")
+				.append(subPath);
+		return sb.append("\">")
+				.append(text)
+				.append("</a>")
+				.toString();
+	}
+	
+	public static String postButton(final String path, final String label)
 	{
 		final StringBuilder sb = new StringBuilder();
 		sb.append("<form method=\"post\" action=\"");
@@ -138,7 +150,7 @@ public class HtmlTools {
 		return sb.toString();
 	}
 	
-	private static String input(final String type, final String name, final Object value)
+	public static String input(final String type, final String name, final Object value)
 	{
 		return new StringBuilder("<input type=\"")
 				.append(type)
@@ -199,10 +211,10 @@ public class HtmlTools {
 		for(final RoseDto dto : dtos)
 		{
 			sb.append("<tr><td>")
-				.append(linkTo(String.valueOf(dto.getId()), entity.getObjectName(), dto.getId()  ));
+				.append(linkToWeb(String.valueOf(dto.getId()), entity.getObjectName(), dto.getId()  ));
 			for(int i = 0; i < entity.getFields().size();i++)
 				sb.append("</td><td>")
-					.append(linkTo(String.valueOf(dto.getFieldValue(i)), entity.getObjectName(), dto.getId() ));
+					.append(linkToWeb(String.valueOf(dto.getFieldValue(i)), entity.getObjectName(), dto.getId() ));
 			sb.append("</td></tr>");
 		}
 		return sb.append("</table>").toString();

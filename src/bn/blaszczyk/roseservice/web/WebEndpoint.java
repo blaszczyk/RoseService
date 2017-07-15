@@ -80,7 +80,7 @@ public class WebEndpoint implements Endpoint {
 			else if(path.equals("restart"))
 			{
 				serviceConfigClient.postRestartRequest();
-				responseString = new HtmlBuilder().h2("Server restarting").append(HtmlTools.linkTo("go to start")).build();
+				responseString = new HtmlBuilder().h2("Server restarting").append(HtmlTools.linkToWeb("go to start")).build();
 			}
 			else if(path.equals("server"))
 			{
