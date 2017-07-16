@@ -150,16 +150,19 @@ public class HtmlTools {
 		return sb.toString();
 	}
 	
-	public static String input(final String type, final String name, final Object value)
+	public static String input(final String type, final String name, final Object value, final String... attributes)
 	{
-		return new StringBuilder("<input type=\"")
+		final StringBuilder sb = new StringBuilder("<input type=\"")
 				.append(type)
 				.append("\" name=\"")
 				.append(name)
 				.append("\" value=\"")
 				.append(value)
-				.append("\">")
-				.toString();
+				.append("\"");
+		for(final String attribute : attributes)
+			sb.append(" ").append(attribute);
+		sb.append(">");
+		return sb.toString();
 	}
 	
 	private static String primitivesTable(final Entity entity, final RoseDto dto)
