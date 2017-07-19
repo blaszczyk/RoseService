@@ -1,12 +1,17 @@
 package bn.blaszczyk.roseservice.web;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 import bn.blaszczyk.rose.model.Entity;
 import bn.blaszczyk.rose.model.EntityField;
+import bn.blaszczyk.rose.model.EnumField;
 import bn.blaszczyk.rose.model.Field;
+import bn.blaszczyk.rose.model.PrimitiveField;
+import bn.blaszczyk.rose.model.PrimitiveType;
 import bn.blaszczyk.rosecommon.dto.PreferenceDto;
 import bn.blaszczyk.rosecommon.dto.RoseDto;
 import bn.blaszczyk.rosecommon.tools.CommonPreference;
@@ -181,11 +186,32 @@ public class HtmlTools {
 	{
 		final StringBuilder sb = new StringBuilder("<table>");
 		for(int i = 0; i < entity.getFields().size();i++)
+		{
+			final Field field = entity.getFields().get(i);
 			sb.append("<tr><td>")
-				.append(entity.getFields().get(i).getName())
-				.append("</td><td>")
-				.append(input("text","f" + i,dto.getFieldValue(i)))
-				.append("</td></tr>");
+				.append(field.getName())
+				.append("</td><td>");
+			if(field instanceof EnumField)
+			{
+				final EnumField enumField = (EnumField) field;
+				final Class<?> enumClass = TypeManager.getClass(enumField.getEnumType());
+				final List<String> enumValuesAsString = Arrays.asList(enumClass.getEnumConstants())
+						.stream()
+						.map(String::valueOf)
+						.collect(Collectors.toList());
+				sb.append(selectValue("f" + i, dto.getFieldValue(i), enumValuesAsString ));
+			}
+			else if(field instanceof PrimitiveField)
+			{
+				final PrimitiveField primitiveField = (PrimitiveField) field;
+				if(primitiveField.getType().equals(PrimitiveType.BOOLEAN))
+					sb.append(selectValue("f" + i, dto.getFieldValue(i), Arrays.asList("true","false")));
+			}
+			else
+				sb.append(input("text","f" + i,dto.getFieldValue(i)));
+			
+			sb.append("</td></tr>");
+		}
 		return sb.append("</table>").toString();
 	}
 	
@@ -241,5 +267,23 @@ public class HtmlTools {
 					.append(input("text",preference.getKey(), dto.get(preference)))
 					.append("</td></tr>");
 		return sb.append("</table>").toString();
+	}
+	
+	public static <T> String selectValue(final String name, final T selectedValue, final Iterable<T> values)
+	{
+		final StringBuilder sb = new StringBuilder();
+		sb.append("<select name=\"")
+		.append(name)
+		.append("\">");
+		for(final T value : values)
+			sb.append("<option value=\"")
+			.append(String.valueOf(value))
+			.append("\"")
+			.append(value.equals(selectedValue) ? " selected " : "")
+		    .append(">")
+			.append(String.valueOf(value))
+			.append("</option>");
+		sb.append("</select>");
+		return sb.toString();
 	}
 }
