@@ -159,17 +159,17 @@ public class WebEndpoint implements Endpoint {
 	{
 		final RoseDto dto = client.getDto(entity.getObjectName(), id);
 		final List<List<RoseDto>> subDtos = new ArrayList<>(entity.getEntityFields().size());
-		for(int i = 0; i < entity.getEntityFields().size(); i++)
+		for(final EntityField field : entity.getEntityFields())
 		{
-			final EntityField field = entity.getEntityFields().get(i);
 			final String subEntityName = field.getEntity().getObjectName();
+			final String fieldName = field.getName();
 			if(field.getType().isSecondMany())
 			{
-				subDtos.add(client.getDtos(subEntityName,dto.getEntityIds(i)));
+				subDtos.add(client.getDtos(subEntityName,dto.getEntityIds(fieldName)));
 			}
 			else
 			{
-				final int subId = dto.getEntityId(i);
+				final int subId = dto.getEntityId(fieldName);
 				if(subId < 0)
 					subDtos.add(Collections.emptyList());
 				else

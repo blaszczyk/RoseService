@@ -173,21 +173,23 @@ public class HtmlTools {
 	private static String primitivesTable(final Entity entity, final RoseDto dto)
 	{
 		final StringBuilder sb = new StringBuilder("<table>");
-		for(int i = 0; i < entity.getFields().size();i++)
+		for(final Field field : entity.getFields()) {
+			final String fieldName = field.getName();
 			sb.append("<tr><td>")
-				.append(entity.getFields().get(i).getName())
+				.append(fieldName)
 				.append("</td><td>")
-				.append(dto.getFieldValue(i))
+				.append(dto.getFieldValue(fieldName))
 				.append("</td></tr>");
+		}
 		return sb.append("</table>").toString();
 	}
 	
 	private static String primitivesInputTable(final Entity entity, final RoseDto dto)
 	{
 		final StringBuilder sb = new StringBuilder("<table>");
-		for(int i = 0; i < entity.getFields().size();i++)
+		for(final Field field : entity.getFields())
 		{
-			final Field field = entity.getFields().get(i);
+			final String fieldName = field.getName();
 			sb.append("<tr><td>")
 				.append(field.getName())
 				.append("</td><td>");
@@ -199,17 +201,16 @@ public class HtmlTools {
 						.stream()
 						.map(String::valueOf)
 						.collect(Collectors.toList());
-				sb.append(selectValue("f" + i, dto.getFieldValue(i), enumValuesAsString ));
+				sb.append(selectValue(fieldName, dto.getFieldValue(fieldName), enumValuesAsString ));
 			}
 			else if(field instanceof PrimitiveField)
 			{
 				final PrimitiveField primitiveField = (PrimitiveField) field;
 				if(primitiveField.getType().equals(PrimitiveType.BOOLEAN))
-					sb.append(selectValue("f" + i, dto.getFieldValue(i), Arrays.asList("true","false")));
+					sb.append(selectValue(fieldName, dto.getFieldValue(fieldName), Arrays.asList("true","false")));
+				else
+					sb.append(input("text",fieldName,dto.getFieldValue(fieldName)));
 			}
-			else
-				sb.append(input("text","f" + i,dto.getFieldValue(i)));
-			
 			sb.append("</td></tr>");
 		}
 		return sb.append("</table>").toString();
@@ -218,13 +219,14 @@ public class HtmlTools {
 	private static String entitiesInputTable(final Entity entity, final RoseDto dto)
 	{
 		final StringBuilder sb = new StringBuilder("<table>");
-		for(int i = 0; i < entity.getEntityFields().size();i++)
+		for(final EntityField field : entity.getEntityFields())
 		{
-			final String defValue = String.valueOf( entity.getEntityFields().get(i).getType().isSecondMany() ? dto.getEntityIds(i) : dto.getEntityId(i));
+			final String fieldName = field.getName();
+			final String defValue = String.valueOf( field.getType().isSecondMany() ? dto.getEntityIds(fieldName) : dto.getEntityId(fieldName));
 			sb.append("<tr><td>")
-				.append(entity.getEntityFields().get(i).getName())
+				.append(fieldName)
 				.append("</td><td>")
-				.append(input("text","e" + i, defValue))
+				.append(input("text",fieldName, defValue))
 				.append("</td></tr>");
 		}
 		return sb.append("</table>").toString();
@@ -241,9 +243,9 @@ public class HtmlTools {
 		{
 			sb.append("<tr><td>")
 				.append(linkToWeb(String.valueOf(dto.getId()), entity.getObjectName(), dto.getId()  ));
-			for(int i = 0; i < entity.getFields().size();i++)
+			for(final Field field : entity.getFields())
 				sb.append("</td><td>")
-					.append(linkToWeb(String.valueOf(dto.getFieldValue(i)), entity.getObjectName(), dto.getId() ));
+					.append(linkToWeb(String.valueOf(dto.getFieldValue(field.getName())), entity.getObjectName(), dto.getId() ));
 			sb.append("</td></tr>");
 		}
 		return sb.append("</table>").toString();

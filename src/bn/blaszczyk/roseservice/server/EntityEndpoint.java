@@ -207,16 +207,17 @@ public class EntityEndpoint implements Endpoint {
 			for(int i = 0; i < entityModel.getFields().size(); i++)
 			{
 				final Field field = entityModel.getFields().get(i);
-				final String dtoValue = dto.getFieldValue(i);
+				final String dtoValue = dto.getFieldValue(field.getName());
 				final Object value = EntityUtils.getPrimitiveValue(field, dtoValue);
 				entity.setField(i, value);
 			}
 			for(int i = 0; i < entity.getEntityCount(); i++)
 			{
+				final String fieldName = entity.getEntityName(i);
 				if(entity.getRelationType(i).isSecondMany())
-					updateMany(entity,i,dto.getEntityIds(i));
+					updateMany(entity,i,dto.getEntityIds(fieldName));
 				else
-					updateOne(entity,i,dto.getEntityId(i));
+					updateOne(entity,i,dto.getEntityId(fieldName));
 			}
 			controller.update(entity);
 		}
