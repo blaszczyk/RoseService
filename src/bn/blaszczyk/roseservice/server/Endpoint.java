@@ -5,7 +5,7 @@ import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import bn.blaszczyk.rosecommon.RoseException;
+import bn.blaszczyk.rose.RoseException;
 
 public interface Endpoint {
 

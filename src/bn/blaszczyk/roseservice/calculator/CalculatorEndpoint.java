@@ -10,7 +10,7 @@ import java.util.regex.Pattern;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import bn.blaszczyk.rosecommon.RoseException;
+import bn.blaszczyk.rose.RoseException;
 import bn.blaszczyk.roseservice.server.Endpoint;
 
 public class CalculatorEndpoint implements Endpoint {

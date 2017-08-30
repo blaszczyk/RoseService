@@ -4,7 +4,6 @@ import java.util.Arrays;
 
 import org.apache.logging.log4j.*;
 
-import bn.blaszczyk.rosecommon.RoseException;
 import bn.blaszczyk.rosecommon.controller.*;
 import bn.blaszczyk.rosecommon.tools.CommonPreference;
 import bn.blaszczyk.rosecommon.tools.LoggerConfigurator;
@@ -15,6 +14,7 @@ import bn.blaszczyk.roseservice.calculator.CalculatorEndpoint;
 import bn.blaszczyk.roseservice.server.*;
 import bn.blaszczyk.roseservice.tools.ServicePreference;
 import bn.blaszczyk.roseservice.web.WebEndpoint;
+import bn.blaszczyk.rose.RoseException;
 import bn.blaszczyk.rose.model.Readable;
 
 import static bn.blaszczyk.rosecommon.tools.Preferences.*;
@@ -23,7 +23,7 @@ import static bn.blaszczyk.roseservice.tools.ServicePreference.*;
 
 public class Launcher {
 	
-	public static final String VERSION_ID = "0.32";
+	public static final String VERSION_ID = "0.37";
 	
 	private static final Logger LOGGER = LogManager.getLogger(Launcher.class);
 	
@@ -117,10 +117,10 @@ public class Launcher {
 		final String[] subArgs = Arrays.copyOfRange(args, 1, args.length);
 		Preferences.setMainClass(RoseServer.class);
 		Preferences.cacheArguments(subArgs, PREFERENCES);
-		TypeManager.parseRoseFile(Launcher.class.getClassLoader().getResourceAsStream(args[0]));
-		LoggerConfigurator.configureLogger(CommonPreference.BASE_DIRECTORY, CommonPreference.LOG_LEVEL);
 		try 
 		{
+			TypeManager.parseRoseFile(Launcher.class.getClassLoader().getResourceAsStream(args[0]));
+			LoggerConfigurator.configureLogger(CommonPreference.BASE_DIRECTORY, CommonPreference.LOG_LEVEL);
 			new Launcher().launch();
 		}
 		catch (RoseException e) 

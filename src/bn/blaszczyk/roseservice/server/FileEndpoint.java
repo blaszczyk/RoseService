@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import bn.blaszczyk.rosecommon.RoseException;
+import bn.blaszczyk.rose.RoseException;
 import bn.blaszczyk.rosecommon.client.CommonClient;
 import bn.blaszczyk.rosecommon.tools.FileConverter;
 

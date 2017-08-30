@@ -15,7 +15,7 @@ import org.apache.logging.log4j.LogManager;
 import com.google.gson.Gson;
 import com.google.gson.internal.StringMap;
 
-import bn.blaszczyk.rosecommon.RoseException;
+import bn.blaszczyk.rose.RoseException;
 import bn.blaszczyk.rosecommon.client.CommonClient;
 import bn.blaszczyk.rosecommon.client.FileClient;
 import bn.blaszczyk.rosecommon.client.ServiceConfigClient;

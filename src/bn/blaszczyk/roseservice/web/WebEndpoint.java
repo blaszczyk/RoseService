@@ -11,9 +11,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import bn.blaszczyk.rose.model.Readable;
+import bn.blaszczyk.rose.RoseException;
 import bn.blaszczyk.rose.model.Entity;
 import bn.blaszczyk.rose.model.EntityField;
-import bn.blaszczyk.rosecommon.RoseException;
 import bn.blaszczyk.rosecommon.client.RoseClient;
 import bn.blaszczyk.rosecommon.client.ServiceConfigClient;
 import bn.blaszczyk.rosecommon.dto.PreferenceDto;

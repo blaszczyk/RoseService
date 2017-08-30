@@ -2,7 +2,7 @@ package bn.blaszczyk.roseservice.server;
 
 import org.eclipse.jetty.server.Server;
 
-import bn.blaszczyk.rosecommon.RoseException;
+import bn.blaszczyk.rose.RoseException;
 
 public class RoseServer {
 
