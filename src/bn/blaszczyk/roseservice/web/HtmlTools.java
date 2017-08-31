@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
-import bn.blaszczyk.rose.model.Entity;
+import bn.blaszczyk.rose.model.EntityModel;
 import bn.blaszczyk.rose.model.EntityField;
 import bn.blaszczyk.rose.model.EnumField;
 import bn.blaszczyk.rose.model.Field;
@@ -35,61 +35,61 @@ public class HtmlTools {
 		return hb.build();
 	}
 	
-	public static String entityList(final Entity entity, final List<RoseDto> dtos)
+	public static String entityList(final EntityModel entityModel, final List<RoseDto> dtos)
 	{
 		final HtmlBuilder hb = new HtmlBuilder();
 		hb.append(linkToWeb("start"))
-			.h1(entity.getSimpleClassName())
-			.append("<form method=\"post\" action=\"/web/" + entity.getObjectName() + "/create\">")
+			.h1(entityModel.getSimpleClassName())
+			.append("<form method=\"post\" action=\"/web/" + entityModel.getObjectName() + "/create\">")
 			.append(input("submit", "", "create"))
-			.append(input("hidden", "type", entity.getObjectName()))
+			.append(input("hidden", "type", entityModel.getObjectName()))
 			.append("</form>")
-			.append(entityTable(entity, dtos));			
+			.append(entityTable(entityModel, dtos));			
 		return hb.build();
 	}
 
-	public static String entityView(final Entity entity, final RoseDto dto, final List<List<RoseDto>> subDtos)
+	public static String entityView(final EntityModel entityModel, final RoseDto dto, final List<List<RoseDto>> subDtos)
 	{
 		final HtmlBuilder hb = new HtmlBuilder();
 		hb.append(linkToWeb("start"))
 			.append(" - ")
-			.append(linkToWeb(entity.getSimpleClassName(), entity.getObjectName()))
+			.append(linkToWeb(entityModel.getSimpleClassName(), entityModel.getObjectName()))
 			.append(" - ")
-			.append(linkToWeb("edit", entity.getObjectName(), dto.getId(), "update"))
-			.h1(entity.getSimpleClassName() + " id=" + dto.getId())
-			.append(primitivesTable(entity, dto));
-		for(int i = 0; i < entity.getEntityFields().size(); i++)
+			.append(linkToWeb("edit", entityModel.getObjectName(), dto.getId(), "update"))
+			.h1(entityModel.getSimpleClassName() + " id=" + dto.getId())
+			.append(primitivesTable(entityModel, dto));
+		for(int i = 0; i < entityModel.getEntityFields().size(); i++)
 		{
 			final List<RoseDto> dtos = subDtos.get(i);
 			if(dtos.isEmpty())
 				continue;
-			final EntityField field = entity.getEntityFields().get(i);
+			final EntityField field = entityModel.getEntityFields().get(i);
 			if(field.getType().isSecondMany())
 				hb.h2(field.getCapitalName())
-					.append(entityTable(field.getEntity(), dtos));
+					.append(entityTable(field.getEntityModel(), dtos));
 			else
 			{
 				final RoseDto subDto = dtos.get(0);
-				hb.h2(linkToWeb(field.getCapitalName(), field.getEntity().getObjectName(), subDto.getId()))
-					.append(primitivesTable(field.getEntity(), subDto));
+				hb.h2(linkToWeb(field.getCapitalName(), field.getEntityModel().getObjectName(), subDto.getId()))
+					.append(primitivesTable(field.getEntityModel(), subDto));
 			}
 		}
 		return hb.build();
 	}
 
-	public static String entityEdit(final Entity entity, final RoseDto dto)
+	public static String entityEdit(final EntityModel entityModel, final RoseDto dto)
 	{
-		final String path = "/web/" + entity.getObjectName() + "/" + dto.getId();
+		final String path = "/web/" + entityModel.getObjectName() + "/" + dto.getId();
 		final HtmlBuilder hb = new HtmlBuilder();
-		hb.h1(entity.getSimpleClassName() + " id=" + dto.getId())
-			.append(linkToWeb("Cancel", entity.getObjectName(), dto.getId()))
+		hb.h1(entityModel.getSimpleClassName() + " id=" + dto.getId())
+			.append(linkToWeb("Cancel", entityModel.getObjectName(), dto.getId()))
 			.append("<form method=\"post\" action=\"")
 			.append(path)
 			.append("/update\">")
 			.append(input("hidden", "id", dto.getId()))
 			.append(input("hidden", "type", dto.getType().getSimpleName()))
-			.append(primitivesInputTable(entity, dto))
-			.append(entitiesInputTable(entity, dto))
+			.append(primitivesInputTable(entityModel, dto))
+			.append(entitiesInputTable(entityModel, dto))
 			.append(input("submit","", "Save"))
 			.append("</form>")
 			.append(postButton(path + "/delete", "Delete"));
@@ -170,10 +170,10 @@ public class HtmlTools {
 		return sb.toString();
 	}
 	
-	private static String primitivesTable(final Entity entity, final RoseDto dto)
+	private static String primitivesTable(final EntityModel entityModel, final RoseDto dto)
 	{
 		final StringBuilder sb = new StringBuilder("<table>");
-		for(final Field field : entity.getFields()) {
+		for(final Field field : entityModel.getFields()) {
 			final String fieldName = field.getName();
 			sb.append("<tr><td>")
 				.append(fieldName)
@@ -184,10 +184,10 @@ public class HtmlTools {
 		return sb.append("</table>").toString();
 	}
 	
-	private static String primitivesInputTable(final Entity entity, final RoseDto dto)
+	private static String primitivesInputTable(final EntityModel entityModel, final RoseDto dto)
 	{
 		final StringBuilder sb = new StringBuilder("<table>");
-		for(final Field field : entity.getFields())
+		for(final Field field : entityModel.getFields())
 		{
 			final String fieldName = field.getName();
 			sb.append("<tr><td>")
@@ -216,10 +216,10 @@ public class HtmlTools {
 		return sb.append("</table>").toString();
 	}
 	
-	private static String entitiesInputTable(final Entity entity, final RoseDto dto)
+	private static String entitiesInputTable(final EntityModel entityModel, final RoseDto dto)
 	{
 		final StringBuilder sb = new StringBuilder("<table>");
-		for(final EntityField field : entity.getEntityFields())
+		for(final EntityField field : entityModel.getEntityFields())
 		{
 			final String fieldName = field.getName();
 			final String defValue = String.valueOf( field.getType().isSecondMany() ? dto.getEntityIds(fieldName) : dto.getEntityId(fieldName));
@@ -232,20 +232,20 @@ public class HtmlTools {
 		return sb.append("</table>").toString();
 	}
 	
-	private static String entityTable(final Entity entity, final List<RoseDto> dtos)
+	private static String entityTable(final EntityModel entityModel, final List<RoseDto> dtos)
 	{
 		final StringBuilder sb = new StringBuilder("<table><tr><th>id");
-		for(final Field field : entity.getFields())
+		for(final Field field : entityModel.getFields())
 			sb.append("</th><th>")
 				.append(field.getName());
 		sb.append("</th></tr>");
 		for(final RoseDto dto : dtos)
 		{
 			sb.append("<tr><td>")
-				.append(linkToWeb(String.valueOf(dto.getId()), entity.getObjectName(), dto.getId()  ));
-			for(final Field field : entity.getFields())
+				.append(linkToWeb(String.valueOf(dto.getId()), entityModel.getObjectName(), dto.getId()  ));
+			for(final Field field : entityModel.getFields())
 				sb.append("</td><td>")
-					.append(linkToWeb(String.valueOf(dto.getFieldValue(field.getName())), entity.getObjectName(), dto.getId() ));
+					.append(linkToWeb(String.valueOf(dto.getFieldValue(field.getName())), entityModel.getObjectName(), dto.getId() ));
 			sb.append("</td></tr>");
 		}
 		return sb.append("</table>").toString();

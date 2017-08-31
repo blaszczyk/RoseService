@@ -12,7 +12,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import bn.blaszczyk.rose.model.Readable;
 import bn.blaszczyk.rose.RoseException;
-import bn.blaszczyk.rose.model.Entity;
+import bn.blaszczyk.rose.model.EntityModel;
 import bn.blaszczyk.rose.model.EntityField;
 import bn.blaszczyk.rosecommon.client.RoseClient;
 import bn.blaszczyk.rosecommon.client.ServiceConfigClient;
@@ -49,14 +49,14 @@ public class WebEndpoint implements Endpoint {
 				if(!pathOptions.isValid())
 					return HttpServletResponse.SC_NOT_FOUND;
 				final Class<? extends Readable> type = pathOptions.getType();
-				final Entity entity = TypeManager.getEntity(type);
+				final EntityModel entityModel = TypeManager.getEntityModel(type);
 				if(pathOptions.hasId())
 					if(pathOptions.hasOptions() && pathOptions.getOptions()[0].equals("update"))
-						responseString = buildEntityEdit(entity, pathOptions.getId());
+						responseString = buildEntityEdit(entityModel, pathOptions.getId());
 					else
-						responseString = buildEntityView(entity, pathOptions.getId());
+						responseString = buildEntityView(entityModel, pathOptions.getId());
 				else
-					responseString = buildEntitiesList(entity);
+					responseString = buildEntitiesList(entityModel);
 			}
 			response.getWriter().write(responseString);
 			return HttpServletResponse.SC_OK;
@@ -99,16 +99,16 @@ public class WebEndpoint implements Endpoint {
 				case "update":
 					final RoseDto updateDto = new RoseDto(request.getParameterMap());
 					client.putDto(updateDto);
-					responseString = buildEntityView(TypeManager.getEntity(updateDto.getType()), updateDto.getId());
+					responseString = buildEntityView(TypeManager.getEntityModel(updateDto.getType()), updateDto.getId());
 					break;
 				case "create":
 					RoseDto createDto = new RoseDto(request.getParameterMap());
 					createDto = client.postDto(createDto);
-					responseString = buildEntityEdit(TypeManager.getEntity(createDto.getType()), createDto.getId());
+					responseString = buildEntityEdit(TypeManager.getEntityModel(createDto.getType()), createDto.getId());
 					break;
 				case "delete":
 					client.deleteByID(pathOptions.getType().getSimpleName().toLowerCase(), pathOptions.getId());
-					responseString = buildEntitiesList(TypeManager.getEntity(pathOptions.getType()));
+					responseString = buildEntitiesList(TypeManager.getEntityModel(pathOptions.getType()));
 					break;
 				default:
 					return HttpServletResponse.SC_NOT_FOUND;
@@ -143,25 +143,25 @@ public class WebEndpoint implements Endpoint {
 		return status;
 	}
 	
-	private String buildEntitiesList(final Entity entity) throws RoseException
+	private String buildEntitiesList(final EntityModel entityModel) throws RoseException
 	{
-		final List<RoseDto> dtos = client.getDtos(entity.getObjectName());
-		return HtmlTools.entityList(entity,dtos);
+		final List<RoseDto> dtos = client.getDtos(entityModel.getObjectName());
+		return HtmlTools.entityList(entityModel,dtos);
 	}
 
-	private String buildEntityEdit(final Entity entity, final int id) throws RoseException
+	private String buildEntityEdit(final EntityModel entityModel, final int id) throws RoseException
 	{
-		final RoseDto dto = client.getDto(entity.getObjectName(), id);
-		return HtmlTools.entityEdit(entity, dto);
+		final RoseDto dto = client.getDto(entityModel.getObjectName(), id);
+		return HtmlTools.entityEdit(entityModel, dto);
 	}
 
-	private String buildEntityView(final Entity entity, final int id) throws RoseException
+	private String buildEntityView(final EntityModel entityModel, final int id) throws RoseException
 	{
-		final RoseDto dto = client.getDto(entity.getObjectName(), id);
-		final List<List<RoseDto>> subDtos = new ArrayList<>(entity.getEntityFields().size());
-		for(final EntityField field : entity.getEntityFields())
+		final RoseDto dto = client.getDto(entityModel.getObjectName(), id);
+		final List<List<RoseDto>> subDtos = new ArrayList<>(entityModel.getEntityFields().size());
+		for(final EntityField field : entityModel.getEntityFields())
 		{
-			final String subEntityName = field.getEntity().getObjectName();
+			final String subEntityName = field.getEntityModel().getObjectName();
 			final String fieldName = field.getName();
 			if(field.getType().isSecondMany())
 			{
@@ -176,7 +176,7 @@ public class WebEndpoint implements Endpoint {
 					subDtos.add(Collections.singletonList(client.getDto(subEntityName, subId)));
 			}
 		}
-		return HtmlTools.entityView(entity, dto,subDtos);
+		return HtmlTools.entityView(entityModel, dto,subDtos);
 	}
 	
 	private String buildServerControls() throws RoseException

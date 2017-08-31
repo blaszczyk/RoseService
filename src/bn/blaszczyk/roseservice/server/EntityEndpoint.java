@@ -21,7 +21,7 @@ import com.google.gson.Gson;
 import com.google.gson.internal.StringMap;
 
 import bn.blaszczyk.rose.RoseException;
-import bn.blaszczyk.rose.model.Entity;
+import bn.blaszczyk.rose.model.EntityModel;
 import bn.blaszczyk.rose.model.Field;
 import bn.blaszczyk.rose.model.Writable;
 import bn.blaszczyk.rose.model.Readable;
@@ -72,10 +72,8 @@ public class EntityEndpoint implements Endpoint {
 			{
 				final List<RoseDto> dtos;
 				if(pathOptions.hasId())
-					dtos = pathOptions.getIds()
+					dtos = controller.getEntitiesByIds(type, pathOptions.getIds())
 										.stream()
-										.map(i -> getById(type, i))
-										.filter(e -> e != null)
 										.map(RoseDto::new)
 										.collect(Collectors.toList());
 				else
@@ -185,24 +183,11 @@ public class EntityEndpoint implements Endpoint {
 		response.getWriter().write(encodedResponseString);
 	}
 	
-	private Readable getById(final Class<? extends Readable> type, final int id)
-	{
-		try
-		{
-			return controller.getEntityById(type, id);
-		}
-		catch (RoseException e) 
-		{
-			LOGGER.error("Error getting " + type.getSimpleName() + " with id=" + id, e);
-			return null;
-		}
-	}
-	
 	private void update(final Writable entity, final RoseDto dto) throws RoseException
 	{
 		try
 		{
-			final Entity entityModel = TypeManager.getEntity(entity);
+			final EntityModel entityModel = TypeManager.getEntityModel(entity);
 			for(int i = 0; i < entityModel.getFields().size(); i++)
 			{
 				final Field field = entityModel.getFields().get(i);
