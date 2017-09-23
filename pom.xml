@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>bn.blaszczyk</groupId>
   <artifactId>rose-service</artifactId>
-  <version>0.37</version>
+  <version>0.39</version>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
@@ -16,7 +16,7 @@
     <dependency>
       <groupId>bn.blaszczyk</groupId>
       <artifactId>rose-common</artifactId>
-      <version>0.34</version>
+      <version>0.39</version>
     </dependency>
   </dependencies>
   <build>

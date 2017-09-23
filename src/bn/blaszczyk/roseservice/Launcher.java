@@ -23,16 +23,13 @@ import static bn.blaszczyk.roseservice.tools.ServicePreference.*;
 
 public class Launcher {
 	
-	public static final String VERSION_ID = "0.37";
+	public static final String VERSION_ID = "0.39";
 	
 	private static final Logger LOGGER = LogManager.getLogger(Launcher.class);
 	
 	private static final Preference[][] PREFERENCES = new Preference[][]{ServicePreference.values(),CommonPreference.values()};
 
-	private PersistenceController hibernateController;
-	private CacheController cacheController;
 	private ModelController controller;
-	
 	private RoseHandler handler;
 	private RoseServer server;
 	
@@ -40,10 +37,10 @@ public class Launcher {
 	
 	public void launch() throws RoseException
 	{
-		hibernateController = new PersistenceController();
-		cacheController = new CacheController(hibernateController);
-		controller = new ConsistencyDecorator(cacheController);
-		
+		controller = ControllerBuilder.forDataBase()
+				.withCache()
+				.withConsistencyCheck()
+				.build();
 		handler = new RoseHandler();
 		
 		port = getIntegerValue(SERVICE_PORT);
@@ -51,7 +48,7 @@ public class Launcher {
 		
 		registerEndpoints();
 		
-		new Thread(this::preloadEntities,"Thread-Load-Entities").start();
+		new Thread(this::preloadEntities,"thread: load entities").start();
 		
 		try
 		{
@@ -88,8 +85,6 @@ public class Launcher {
 		server = null;
 		handler = null;
 		controller = null;
-		cacheController = null;
-		hibernateController = null;
 	}
 
 	public RoseServer getServer()
@@ -134,7 +129,7 @@ public class Launcher {
 		try
 		{
 			for(Class<? extends Readable> type : TypeManager.getEntityClasses())
-				cacheController.getEntities(type);
+				controller.getEntities(type);
 		}
 		catch (RoseException e) 
 		{
