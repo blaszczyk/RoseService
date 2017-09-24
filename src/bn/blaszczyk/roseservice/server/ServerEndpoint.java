@@ -1,7 +1,5 @@
 package bn.blaszczyk.roseservice.server;
 
-import java.net.URLDecoder;
-import java.net.URLEncoder;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -24,7 +22,6 @@ import bn.blaszczyk.rosecommon.tools.Preferences;
 import bn.blaszczyk.roseservice.Launcher;
 
 import static bn.blaszczyk.rosecommon.tools.Preferences.*;
-import static bn.blaszczyk.rosecommon.client.CommonClient.CODING_CHARSET;
 
 public class ServerEndpoint implements Endpoint {
 	
@@ -48,8 +45,8 @@ public class ServerEndpoint implements Endpoint {
 			if(path.equals("status"))
 			{
 				final Map<String,String> status = server.getHandler().getStatus();
-				status.put("uptime jvm", transformTime(launcher.getJvmUptime()));
-				status.put("uptime service", transformTime(launcher.getServiceUptime()));
+				status.put("uptime jvm", formatTime(launcher.getJvmUptime()));
+				status.put("uptime service", formatTime(launcher.getServiceUptime()));
 				responseString = GSON.toJson(status);
 			}
 			else if(path.equals("config"))
@@ -59,8 +56,7 @@ public class ServerEndpoint implements Endpoint {
 			}
 			else
 				return HttpServletResponse.SC_NOT_FOUND;
-			final String encodedResponceString = URLEncoder.encode(responseString, CODING_CHARSET);
-			response.getWriter().write(encodedResponceString);
+			response.getWriter().write(responseString);
 			return HttpServletResponse.SC_OK;
 		}
 		catch (Exception e) 
@@ -88,8 +84,7 @@ public class ServerEndpoint implements Endpoint {
 		{
 			if(path.equals("config"))
 			{
-				final String encodedRequestString = request.getReader().lines().collect(Collectors.joining("\r\n"));
-				final String requestString = URLDecoder.decode(encodedRequestString, CODING_CHARSET);
+				final String requestString = request.getReader().lines().collect(Collectors.joining("\r\n"));
 				final StringMap<?> stringMap = GSON.fromJson(requestString, StringMap.class);
 				final PreferenceDto dto = new PreferenceDto(stringMap);
 				Arrays.stream(launcher.getPreferences())
@@ -169,7 +164,7 @@ public class ServerEndpoint implements Endpoint {
 		}
 	}
 
-	private static String transformTime(long time)
+	private static String formatTime(long time)
 	{
 		final long milliseconds = time % 1000;
 		time = time / 1000;

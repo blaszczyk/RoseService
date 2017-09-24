@@ -2,8 +2,6 @@ package bn.blaszczyk.roseservice.server;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
-import java.net.URLEncoder;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -27,8 +25,6 @@ import bn.blaszczyk.rosecommon.controller.ModelController;
 import bn.blaszczyk.rosecommon.dto.RoseDto;
 import bn.blaszczyk.rosecommon.tools.EntityUtils;
 import bn.blaszczyk.rosecommon.tools.TypeManager;
-
-import static bn.blaszczyk.rosecommon.client.CommonClient.CODING_CHARSET;
 
 public class EntityEndpoint implements Endpoint {
 
@@ -71,17 +67,17 @@ public class EntityEndpoint implements Endpoint {
 				final List<RoseDto> dtos;
 				if(pathOptions.hasId())
 					dtos = controller.getEntitiesByIds(type, pathOptions.getIds())
-										.stream()
-										.map(RoseDto::new)
-										.collect(Collectors.toList());
+						.stream()
+						.map(RoseDto::new)
+						.collect(Collectors.toList());
 				else
 					dtos = controller.getEntities(type)
-										.stream()
-										.map(RoseDto::new)
-										.collect(Collectors.toList());
+						.stream()
+						.map(RoseDto::new)
+						.collect(Collectors.toList());
 				responseString = GSON.toJson(dtos);
 			}
-			writeEncodedResponse(response, responseString);
+			response.getWriter().write(responseString);
 			return HttpServletResponse.SC_OK;
 		}
 		catch (Exception e) 
@@ -106,7 +102,7 @@ public class EntityEndpoint implements Endpoint {
 			final Writable entity = (Writable) controller.createNew(dto.getType());
 			update(entity, dto);
 			final String responseString = GSON.toJson(new RoseDto(entity));
-			writeEncodedResponse(response, responseString);
+			response.getWriter().write(responseString);
 			return HttpServletResponse.SC_CREATED;
 		}
 		catch (Exception e) 
@@ -159,17 +155,10 @@ public class EntityEndpoint implements Endpoint {
 
 	private RoseDto getRequestDto(final HttpServletRequest request)	throws IOException, UnsupportedEncodingException, RoseException
 	{
-		final String encodedRequestString = request.getReader().lines().collect(Collectors.joining("\r\n"));
-		final String requestString = URLDecoder.decode(encodedRequestString, CODING_CHARSET);
+		final String requestString = request.getReader().lines().collect(Collectors.joining("\r\n"));
 		final StringMap<?> stringMap = GSON.fromJson(requestString, StringMap.class);
 		final RoseDto dto = new RoseDto(stringMap);
 		return dto;
-	}
-	
-	private void writeEncodedResponse(final HttpServletResponse response, final String responseString) throws UnsupportedEncodingException, IOException
-	{
-		final String encodedResponseString = URLEncoder.encode(responseString, CODING_CHARSET);
-		response.getWriter().write(encodedResponseString);
 	}
 	
 	private void update(final Writable entity, final RoseDto dto) throws RoseException

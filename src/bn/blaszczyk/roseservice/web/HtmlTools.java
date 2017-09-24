@@ -88,7 +88,7 @@ public class HtmlTools {
 			.append(linkToWeb("Cancel", entityModel.getObjectName(), dto.getId()))
 			.append("<form method=\"post\" action=\"")
 			.append(path)
-			.append("/update\">")
+			.append("/update\" accept-charset=\"UTF-8\">")
 			.append(input("hidden", "id", dto.getId()))
 			.append(input("hidden", "type", dto.getType().getSimpleName()))
 			.append(primitivesInputTable(entityModel, dto))
@@ -119,7 +119,7 @@ public class HtmlTools {
 			.append(postButton("/web/restart", "Restart"))
 			.append(postButton("/web/stop", "Stop"))
 			.h2("Configuration")
-			.append("<form method=\"post\" action=\"/web/server\">")
+			.append("<form method=\"post\" action=\"/web/server\" accept-charset=\"UTF-8\">")
 			.append(preferencesInputTable(preferences))
 			.append(input("submit","", "Save"))
 			.append("</form>");

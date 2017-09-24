@@ -1,7 +1,6 @@
 package bn.blaszczyk.roseservice.server;
 
 import java.io.File;
-import java.net.URLEncoder;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
@@ -11,7 +10,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import bn.blaszczyk.rose.RoseException;
-import bn.blaszczyk.rosecommon.client.CommonClient;
 import bn.blaszczyk.rosecommon.tools.FileConverter;
 
 public class FileEndpoint implements Endpoint {
@@ -36,7 +34,7 @@ public class FileEndpoint implements Endpoint {
 					final String subFiles = Arrays.stream(file.listFiles())
 							.map(File::getName)
 							.collect(Collectors.joining(","));
-					response.getWriter().write(URLEncoder.encode(subFiles, CommonClient.CODING_CHARSET));
+					response.getWriter().write(subFiles);
 				}
 				else
 					Files.copy(file.toPath(), response.getOutputStream());
