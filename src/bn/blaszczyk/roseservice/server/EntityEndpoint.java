@@ -4,10 +4,8 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
@@ -157,15 +155,6 @@ public class EntityEndpoint implements Endpoint {
 		{
 			throw RoseException.wrap(e,"error handling DELETE request");
 		}
-	}
-
-	@Override
-	public Map<String, String> status()
-	{
-		final Map<String,String> status = new HashMap<>();
-		status.put("endpoint /entity", "active");
-		status.put("database connection", "active");
-		return status;
 	}
 
 	private RoseDto getRequestDto(final HttpServletRequest request)	throws IOException, UnsupportedEncodingException, RoseException

@@ -1,6 +1,7 @@
 package bn.blaszczyk.roseservice.web;
 
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -20,6 +21,8 @@ import bn.blaszczyk.rosecommon.tools.TypeManager;
 import bn.blaszczyk.roseservice.tools.ServicePreference;
 
 public class HtmlTools {
+
+	private static final Comparator<? super Entry<String, String>> KEY_COMPARATOR = (e1,e2) -> e1.getKey().compareTo(e2.getKey());
 
 	public static String startPage()
 	{
@@ -103,12 +106,15 @@ public class HtmlTools {
 			.h1("Server Controls")
 			.h2("Status")
 			.append("<table>");
-		for(final Entry<String,String> entry : status.entrySet())
-			hb.append("<tr><td>")
-				.append(entry.getKey())
-				.append("</td><td>")
-				.append(entry.getValue())
-				.append("</td></tr>");
+		status.entrySet().stream()
+			.sorted(KEY_COMPARATOR)
+			.forEachOrdered(entry -> {
+				hb.append("<tr><td>")
+					.append(entry.getKey())
+					.append("</td><td>")
+					.append(entry.getValue())
+					.append("</td></tr>");
+			});
 		hb.append("</table>")
 			.append(postButton("/web/restart", "Restart"))
 			.append(postButton("/web/stop", "Stop"))
@@ -259,16 +265,34 @@ public class HtmlTools {
 				sb.append("<tr><td>")
 					.append(preference.getKey())
 					.append("</td><td>")
-					.append(input("text",preference.getKey(), dto.get(preference)))
+					.append(preferenceInput(preference, dto.get(preference)))
 					.append("</td></tr>");
 		for(final Preference preference : ServicePreference.values())
 			if(dto.containsPreference(preference))
 				sb.append("<tr><td>")
 					.append(preference.getKey())
 					.append("</td><td>")
-					.append(input("text",preference.getKey(), dto.get(preference)))
+					.append(preferenceInput(preference, dto.get(preference)))
 					.append("</td></tr>");
 		return sb.append("</table>").toString();
+	}
+	
+	private static String preferenceInput(final Preference preference, final Object value)
+	{
+		if(preference.equals(CommonPreference.DB_PASSWORD))
+			return input("password",preference.getKey(), value);
+		if(preference.equals(CommonPreference.LOG_LEVEL))
+			return selectValue(preference.getKey(), value, Arrays.asList("ALL","DEBUG","INFO","WARN","ERROR","NONE"));
+		switch (preference.getType())
+		{
+		case STRING:
+		case INT:
+		case NUMERIC:
+			return input("text",preference.getKey(), value);
+		case BOOLEAN:
+			return selectValue(preference.getKey(), String.valueOf(value), Arrays.asList("true","false"));
+		}
+		return "";
 	}
 	
 	public static <T> String selectValue(final String name, final T selectedValue, final Iterable<T> values)

@@ -5,8 +5,6 @@ import java.net.URLEncoder;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
@@ -94,12 +92,6 @@ public class FileEndpoint implements Endpoint {
 	private File fileOf(final String path) throws RoseException
 	{
 		return converter.fromPath(path);
-	}
-
-	@Override
-	public Map<String, String> status()
-	{
-		return Collections.singletonMap("endpoint /path", "active");
 	}
 
 }

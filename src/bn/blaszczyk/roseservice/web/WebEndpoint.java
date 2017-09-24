@@ -3,7 +3,6 @@ package bn.blaszczyk.roseservice.web;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -133,14 +132,6 @@ public class WebEndpoint implements Endpoint {
 	public int delete(final String path, final HttpServletRequest request, final HttpServletResponse response) throws RoseException
 	{
 		return HttpServletResponse.SC_BAD_REQUEST;
-	}
-	
-	@Override
-	public Map<String, String> status()
-	{
-		final Map<String,String> status = new HashMap<>();
-		status.put("endpoint /web", "active");
-		return status;
 	}
 	
 	private String buildEntitiesList(final EntityModel entityModel) throws RoseException

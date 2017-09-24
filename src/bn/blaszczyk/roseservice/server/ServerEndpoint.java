@@ -3,7 +3,6 @@ package bn.blaszczyk.roseservice.server;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -20,6 +19,7 @@ import bn.blaszczyk.rosecommon.client.CommonClient;
 import bn.blaszczyk.rosecommon.client.FileClient;
 import bn.blaszczyk.rosecommon.client.ServiceConfigClient;
 import bn.blaszczyk.rosecommon.dto.PreferenceDto;
+import bn.blaszczyk.rosecommon.tools.CommonPreference;
 import bn.blaszczyk.rosecommon.tools.Preferences;
 import bn.blaszczyk.roseservice.Launcher;
 
@@ -48,6 +48,8 @@ public class ServerEndpoint implements Endpoint {
 			if(path.equals("status"))
 			{
 				final Map<String,String> status = server.getHandler().getStatus();
+				status.put("uptime jvm", transformTime(launcher.getJvmUptime()));
+				status.put("uptime service", transformTime(launcher.getServiceUptime()));
 				responseString = GSON.toJson(status);
 			}
 			else if(path.equals("config"))
@@ -110,20 +112,13 @@ public class ServerEndpoint implements Endpoint {
 	{
 		return HttpServletResponse.SC_NOT_FOUND;
 	}
-
-	@Override
-	public Map<String, String> status()
-	{
-		final Map<String,String> status = new HashMap<>();
-		status.put("endpoint /server", "active");
-		return status;
-	}
 	
 	private PreferenceDto createAllPreferencesDto()
 	{
 		final PreferenceDto dto = new PreferenceDto();
 		Arrays.stream(launcher.getPreferences())
 				.flatMap(Arrays::stream)
+				.filter(p -> !p.equals(CommonPreference.SERVICE_HOST))
 				.forEach(p -> dto.put(p, getValue(p)));
 		return dto;
 	}
@@ -172,5 +167,18 @@ public class ServerEndpoint implements Endpoint {
 		{
 			LogManager.getLogger(ServerEndpoint.class).error("Error restarting service", e);
 		}
+	}
+
+	private static String transformTime(long time)
+	{
+		final long milliseconds = time % 1000;
+		time = time / 1000;
+		final long seconds = time % 60;
+		time = time / 60;
+		final long minutes = time % 60;
+		time = time / 60;
+		final long hours = time % 24;
+		final long days = time / 24;
+		return (days > 0 ? ( days + "d " ) : "") + String.format("%2d:%02d:%02d,%03d", hours, minutes, seconds, milliseconds);
 	}
 }

@@ -23,7 +23,7 @@ import static bn.blaszczyk.roseservice.tools.ServicePreference.*;
 
 public class Launcher {
 	
-	public static final String VERSION_ID = "0.39";
+	public static final String VERSION_ID = "0.40";
 	
 	private static final Logger LOGGER = LogManager.getLogger(Launcher.class);
 	
@@ -34,6 +34,10 @@ public class Launcher {
 	private RoseServer server;
 	
 	private Integer port;
+
+	private final long jvmStartTime = System.currentTimeMillis();
+
+	private long serviceStartTime = System.currentTimeMillis();
 	
 	public void launch() throws RoseException
 	{
@@ -53,6 +57,7 @@ public class Launcher {
 		try
 		{
 			server.startServer();
+			serviceStartTime = System.currentTimeMillis();
 		}
 		catch(RoseException e)
 		{
@@ -114,7 +119,7 @@ public class Launcher {
 		Preferences.cacheArguments(subArgs, PREFERENCES);
 		try 
 		{
-			TypeManager.parseRoseFile(Launcher.class.getClassLoader().getResourceAsStream(args[0]));
+			TypeManager.parseRoseFile(args[0]);
 			LoggerConfigurator.configureLogger(CommonPreference.BASE_DIRECTORY, CommonPreference.LOG_LEVEL);
 			new Launcher().launch();
 		}
@@ -135,6 +140,16 @@ public class Launcher {
 		{
 			LOGGER.error("error preloading entities", e);
 		}
+	}
+
+	public long getJvmUptime()
+	{
+		return System.currentTimeMillis() - jvmStartTime;
+	}
+	
+	public long getServiceUptime()
+	{
+		return System.currentTimeMillis() - serviceStartTime;
 	}
 	
 }

@@ -26,7 +26,10 @@ public class RoseHandler extends AbstractHandler {
 	private final static Logger LOGGER = LogManager.getLogger(RoseHandler.class);
 	
 	private final Map<String, Endpoint> endpoints = new HashMap<>();
+	
 	private boolean enabled = true;
+	private int requestCount = 0;
+	private int failedRequestCount = 0;
 
 	public void registerEndpointOptional(final String path, final Endpoint endpoint, final Preference optionalityPreference)
 	{
@@ -99,7 +102,11 @@ public class RoseHandler extends AbstractHandler {
 		{
 			response.setStatus(responseCode);
 			if(responseCode >= 300)
+			{
 				LOGGER.error( "responding " + responseCode + " to " + logContext);
+				failedRequestCount++;
+			}
+			requestCount++;
 			baseRequest.setHandled(true);
 			LOGGER.debug("request handled: " + logContext);
 		}
@@ -108,8 +115,9 @@ public class RoseHandler extends AbstractHandler {
 	public Map<String, String> getStatus()
 	{
 		final Map<String,String> status = new HashMap<>();
-		for(final Endpoint endpoint : endpoints.values())
-			status.putAll(endpoint.status());
+		endpoints.forEach((p,e) -> status.put("endpoint " + p, e.getClass().getSimpleName()));
+		status.put("requests", String.valueOf(requestCount));
+		status.put("requests failed", String.valueOf(failedRequestCount));
 		return status;
 	}
 

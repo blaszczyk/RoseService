@@ -3,7 +3,6 @@ package bn.blaszczyk.roseservice.calculator;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -59,12 +58,6 @@ public class CalculatorEndpoint implements Endpoint {
 	public int delete(String path, HttpServletRequest request, HttpServletResponse response) throws RoseException
 	{
 		return HttpServletResponse.SC_NOT_FOUND;
-	}
-
-	@Override
-	public Map<String, String> status()
-	{
-		return Collections.singletonMap("endpoint /calc", "active");
 	}
 
 	private String evaluateRequestLong(String target) throws IOException
