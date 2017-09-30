@@ -2,10 +2,10 @@ package bn.blaszczyk.roseservice.server;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
@@ -14,15 +14,14 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.logging.log4j.*;
 
 import com.google.gson.Gson;
-import com.google.gson.internal.StringMap;
 
 import bn.blaszczyk.rose.RoseException;
+import bn.blaszczyk.rose.model.Dto;
 import bn.blaszczyk.rose.model.EntityModel;
 import bn.blaszczyk.rose.model.Field;
 import bn.blaszczyk.rose.model.Writable;
 import bn.blaszczyk.rose.model.Readable;
 import bn.blaszczyk.rosecommon.controller.ModelController;
-import bn.blaszczyk.rosecommon.dto.RoseDto;
 import bn.blaszczyk.rosecommon.tools.EntityUtils;
 import bn.blaszczyk.rosecommon.tools.TypeManager;
 
@@ -64,16 +63,16 @@ public class EntityEndpoint implements Endpoint {
 				}
 			else
 			{
-				final List<RoseDto> dtos;
+				final List<Dto> dtos;
 				if(pathOptions.hasId())
 					dtos = controller.getEntitiesByIds(type, pathOptions.getIds())
 						.stream()
-						.map(RoseDto::new)
+						.map(EntityUtils::toDtoSilent)
 						.collect(Collectors.toList());
 				else
 					dtos = controller.getEntities(type)
 						.stream()
-						.map(RoseDto::new)
+						.map(EntityUtils::toDtoSilent)
 						.collect(Collectors.toList());
 				responseString = GSON.toJson(dtos);
 			}
@@ -95,13 +94,11 @@ public class EntityEndpoint implements Endpoint {
 			if(!pathOptions.isValid() || pathOptions.hasId() || pathOptions.hasOptions())
 				return HttpServletResponse.SC_NOT_FOUND;
 			
-			final RoseDto dto = getRequestDto(request);
+			final Dto dto = getRequestDto(request, pathOptions.getType());
 			LOGGER.debug("posting dto " + dto );
-			if(!pathOptions.getType().equals(dto.getType()))
-				return HttpServletResponse.SC_BAD_REQUEST;
-			final Writable entity = (Writable) controller.createNew(dto.getType());
+			final Writable entity = (Writable) controller.createNew(TypeManager.getClass(dto));
 			update(entity, dto);
-			final String responseString = GSON.toJson(new RoseDto(entity));
+			final String responseString = GSON.toJson(EntityUtils.toDto(entity));
 			response.getWriter().write(responseString);
 			return HttpServletResponse.SC_CREATED;
 		}
@@ -119,11 +116,11 @@ public class EntityEndpoint implements Endpoint {
 			final PathOptions pathOptions = new PathOptions(path);
 			if(!pathOptions.isValid())
 				return HttpServletResponse.SC_NOT_FOUND;
-			final RoseDto dto = getRequestDto(request);
+			final Dto dto = getRequestDto(request,pathOptions.getType());
 			LOGGER.debug("putting dto " + dto);
-			if(pathOptions.getId() != dto.getId() || !pathOptions.getType().equals(dto.getType()))
+			if(pathOptions.getId() != dto.getId())
 				return HttpServletResponse.SC_BAD_REQUEST;
-			final Writable entity = (Writable) controller.getEntityById(dto.getType(), dto.getId());
+			final Writable entity = (Writable) controller.getEntityById(TypeManager.getClass(dto), dto.getId());
 			update(entity, dto);
 			return HttpServletResponse.SC_NO_CONTENT;
 		}
@@ -153,15 +150,13 @@ public class EntityEndpoint implements Endpoint {
 		}
 	}
 
-	private RoseDto getRequestDto(final HttpServletRequest request)	throws IOException, UnsupportedEncodingException, RoseException
+	private Dto getRequestDto(final HttpServletRequest request, final Class<? extends Readable> type) throws IOException, UnsupportedEncodingException, RoseException
 	{
 		final String requestString = request.getReader().lines().collect(Collectors.joining("\r\n"));
-		final StringMap<?> stringMap = GSON.fromJson(requestString, StringMap.class);
-		final RoseDto dto = new RoseDto(stringMap);
-		return dto;
+		return GSON.fromJson(requestString, TypeManager.getDtoClass(type));
 	}
 	
-	private void update(final Writable entity, final RoseDto dto) throws RoseException
+	private void update(final Writable entity, final Dto dto) throws RoseException
 	{
 		try
 		{
@@ -169,8 +164,8 @@ public class EntityEndpoint implements Endpoint {
 			for(int i = 0; i < entityModel.getFields().size(); i++)
 			{
 				final Field field = entityModel.getFields().get(i);
-				final String dtoValue = dto.getFieldValue(field.getName());
-				final Object value = EntityUtils.getPrimitiveValue(field, dtoValue);
+				final Object dtoValue = dto.getFieldValue(field.getName());
+				final Object value = EntityUtils.toEntityValue(field, dtoValue);
 				entity.setField(i, value);
 			}
 			for(int i = 0; i < entity.getEntityCount(); i++)
@@ -192,7 +187,7 @@ public class EntityEndpoint implements Endpoint {
 	private void updateOne(final Writable entity, final int index, final Integer entityId) throws RoseException
 	{
 		final Writable oldEntity = (Writable) entity.getEntityValueOne(index);
-		if( oldEntity == null || !oldEntity.getId().equals(entityId))
+		if( oldEntity == null || oldEntity.getId() != entityId)
 		{
 			final Writable newEntity;
 			if(entityId < 0)
@@ -207,9 +202,9 @@ public class EntityEndpoint implements Endpoint {
 		}
 	}
 
-	private void updateMany(final Writable entity, final int index, final List<Integer> entityIds) throws RoseException
+	private void updateMany(final Writable entity, final int index, final int[] entityIds) throws RoseException
 	{
-		final Set<Integer> ids = new TreeSet<>(entityIds);
+		final Set<Integer> ids = Arrays.stream(entityIds).mapToObj(Integer::new).collect(Collectors.toSet());
 		final Set<? extends Readable> subEntities = new HashSet<>(entity.getEntityValueMany(index));
 		for(final Readable subEntity : subEntities)
 			if(ids.contains(subEntity.getId()))

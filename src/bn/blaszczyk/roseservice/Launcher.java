@@ -23,7 +23,7 @@ import static bn.blaszczyk.roseservice.tools.ServicePreference.*;
 
 public class Launcher {
 	
-	public static final String VERSION_ID = "0.41";
+	public static final String VERSION_ID = "0.43";
 	
 	private static final Logger LOGGER = LogManager.getLogger(Launcher.class);
 	

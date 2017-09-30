@@ -1,20 +1,23 @@
 package bn.blaszczyk.roseservice.web;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 import bn.blaszczyk.rose.model.EntityModel;
+import bn.blaszczyk.rose.model.Dto;
 import bn.blaszczyk.rose.model.EntityField;
 import bn.blaszczyk.rose.model.EnumField;
 import bn.blaszczyk.rose.model.Field;
 import bn.blaszczyk.rose.model.PrimitiveField;
 import bn.blaszczyk.rose.model.PrimitiveType;
 import bn.blaszczyk.rosecommon.dto.PreferenceDto;
-import bn.blaszczyk.rosecommon.dto.RoseDto;
 import bn.blaszczyk.rosecommon.tools.CommonPreference;
 import bn.blaszczyk.rosecommon.tools.Preference;
 import bn.blaszczyk.rosecommon.tools.TypeManager;
@@ -23,6 +26,8 @@ import bn.blaszczyk.roseservice.tools.ServicePreference;
 public class HtmlTools {
 
 	private static final Comparator<? super Entry<String, String>> KEY_COMPARATOR = (e1,e2) -> e1.getKey().compareTo(e2.getKey());
+	
+	public static final DateFormat DATE_FORMAT = new SimpleDateFormat("dd.MM.yyyy");
 
 	public static String startPage()
 	{
@@ -38,7 +43,7 @@ public class HtmlTools {
 		return hb.build();
 	}
 	
-	public static String entityList(final EntityModel entityModel, final List<RoseDto> dtos)
+	public static String entityList(final EntityModel entityModel, final List<Dto> dtos)
 	{
 		final HtmlBuilder hb = new HtmlBuilder();
 		hb.append(linkToWeb("start"))
@@ -51,7 +56,7 @@ public class HtmlTools {
 		return hb.build();
 	}
 
-	public static String entityView(final EntityModel entityModel, final RoseDto dto, final List<List<RoseDto>> subDtos)
+	public static String entityView(final EntityModel entityModel, final Dto dto, final List<List<Dto>> subDtos)
 	{
 		final HtmlBuilder hb = new HtmlBuilder();
 		hb.append(linkToWeb("start"))
@@ -63,7 +68,7 @@ public class HtmlTools {
 			.append(primitivesTable(entityModel, dto));
 		for(int i = 0; i < entityModel.getEntityFields().size(); i++)
 		{
-			final List<RoseDto> dtos = subDtos.get(i);
+			final List<Dto> dtos = subDtos.get(i);
 			if(dtos.isEmpty())
 				continue;
 			final EntityField field = entityModel.getEntityFields().get(i);
@@ -72,7 +77,7 @@ public class HtmlTools {
 					.append(entityTable(field.getEntityModel(), dtos));
 			else
 			{
-				final RoseDto subDto = dtos.get(0);
+				final Dto subDto = dtos.get(0);
 				hb.h2(linkToWeb(field.getCapitalName(), field.getEntityModel().getObjectName(), subDto.getId()))
 					.append(primitivesTable(field.getEntityModel(), subDto));
 			}
@@ -80,7 +85,7 @@ public class HtmlTools {
 		return hb.build();
 	}
 
-	public static String entityEdit(final EntityModel entityModel, final RoseDto dto)
+	public static String entityEdit(final EntityModel entityModel, final Dto dto)
 	{
 		final String path = "/web/" + entityModel.getObjectName() + "/" + dto.getId();
 		final HtmlBuilder hb = new HtmlBuilder();
@@ -90,7 +95,7 @@ public class HtmlTools {
 			.append(path)
 			.append("/update\" accept-charset=\"UTF-8\">")
 			.append(input("hidden", "id", dto.getId()))
-			.append(input("hidden", "type", dto.getType().getSimpleName()))
+			.append(input("hidden", "type", TypeManager.getClass(dto).getSimpleName()))
 			.append(primitivesInputTable(entityModel, dto))
 			.append(entitiesInputTable(entityModel, dto))
 			.append(input("submit","", "Save"))
@@ -176,7 +181,7 @@ public class HtmlTools {
 		return sb.toString();
 	}
 	
-	private static String primitivesTable(final EntityModel entityModel, final RoseDto dto)
+	private static String primitivesTable(final EntityModel entityModel, final Dto dto)
 	{
 		final StringBuilder sb = new StringBuilder("<table>");
 		for(final Field field : entityModel.getFields()) {
@@ -184,13 +189,36 @@ public class HtmlTools {
 			sb.append("<tr><td>")
 				.append(fieldName)
 				.append("</td><td>")
-				.append(dto.getFieldValue(fieldName))
+				.append(primitiveStringValue(field, dto))
 				.append("</td></tr>");
 		}
 		return sb.append("</table>").toString();
 	}
+
+	private static String primitiveStringValue(final Field field, final Dto dto)
+	{
+		final Object value = dto.getFieldValue(field.getName());
+		if(field instanceof EnumField)
+			return value == null ? "" : value.toString();
+		switch(((PrimitiveField)field).getType())
+		{
+		case BOOLEAN:
+		case CHAR:
+		case INT:
+		case NUMERIC:
+		case VARCHAR:
+			if(value == null)
+				return "";
+			return String.valueOf(value);
+		case DATE:
+			final long time = value == null ? -1 : ((Long)value).longValue();
+			return time == -1 ? "" : DATE_FORMAT.format(new Date(time));
+		default:
+			return "";
+		}
+	}
 	
-	private static String primitivesInputTable(final EntityModel entityModel, final RoseDto dto)
+	private static String primitivesInputTable(final EntityModel entityModel, final Dto dto)
 	{
 		final StringBuilder sb = new StringBuilder("<table>");
 		for(final Field field : entityModel.getFields())
@@ -207,28 +235,32 @@ public class HtmlTools {
 						.stream()
 						.map(String::valueOf)
 						.collect(Collectors.toList());
-				sb.append(selectValue(fieldName, dto.getFieldValue(fieldName), enumValuesAsString ));
+				sb.append(selectValue(fieldName, String.valueOf(primitiveStringValue(field, dto)), enumValuesAsString ));
 			}
 			else if(field instanceof PrimitiveField)
 			{
 				final PrimitiveField primitiveField = (PrimitiveField) field;
 				if(primitiveField.getType().equals(PrimitiveType.BOOLEAN))
-					sb.append(selectValue(fieldName, dto.getFieldValue(fieldName), Arrays.asList("true","false")));
+					sb.append(selectValue(fieldName, primitiveStringValue(field, dto), Arrays.asList("true","false")));
 				else
-					sb.append(input("text",fieldName,dto.getFieldValue(fieldName)));
+					sb.append(input("text",fieldName,primitiveStringValue(field, dto)));
 			}
 			sb.append("</td></tr>");
 		}
 		return sb.append("</table>").toString();
 	}
 	
-	private static String entitiesInputTable(final EntityModel entityModel, final RoseDto dto)
+	private static String entitiesInputTable(final EntityModel entityModel, final Dto dto)
 	{
 		final StringBuilder sb = new StringBuilder("<table>");
 		for(final EntityField field : entityModel.getEntityFields())
 		{
 			final String fieldName = field.getName();
-			final String defValue = String.valueOf( field.getType().isSecondMany() ? dto.getEntityIds(fieldName) : dto.getEntityId(fieldName));
+			final String defValue;
+			if(field.getType().isSecondMany())
+				defValue = Arrays.stream(dto.getEntityIds(fieldName)).mapToObj(String::valueOf).collect(Collectors.joining(","));
+			else
+				defValue = String.valueOf(dto.getEntityId(fieldName));
 			sb.append("<tr><td>")
 				.append(fieldName)
 				.append("</td><td>")
@@ -238,20 +270,20 @@ public class HtmlTools {
 		return sb.append("</table>").toString();
 	}
 	
-	private static String entityTable(final EntityModel entityModel, final List<RoseDto> dtos)
+	private static String entityTable(final EntityModel entityModel, final List<Dto> dtos)
 	{
 		final StringBuilder sb = new StringBuilder("<table><tr><th>id");
 		for(final Field field : entityModel.getFields())
 			sb.append("</th><th>")
 				.append(field.getName());
 		sb.append("</th></tr>");
-		for(final RoseDto dto : dtos)
+		for(final Dto dto : dtos)
 		{
 			sb.append("<tr><td>")
 				.append(linkToWeb(String.valueOf(dto.getId()), entityModel.getObjectName(), dto.getId()  ));
 			for(final Field field : entityModel.getFields())
 				sb.append("</td><td>")
-					.append(linkToWeb(String.valueOf(dto.getFieldValue(field.getName())), entityModel.getObjectName(), dto.getId() ));
+					.append(linkToWeb(primitiveStringValue(field, dto), entityModel.getObjectName(), dto.getId() ));
 			sb.append("</td></tr>");
 		}
 		return sb.append("</table>").toString();

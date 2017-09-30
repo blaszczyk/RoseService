@@ -10,7 +10,6 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.logging.log4j.LogManager;
 
 import com.google.gson.Gson;
-import com.google.gson.internal.StringMap;
 
 import bn.blaszczyk.rose.RoseException;
 import bn.blaszczyk.rosecommon.client.CommonClient;
@@ -85,7 +84,7 @@ public class ServerEndpoint implements Endpoint {
 			if(path.equals("config"))
 			{
 				final String requestString = request.getReader().lines().collect(Collectors.joining("\r\n"));
-				final StringMap<?> stringMap = GSON.fromJson(requestString, StringMap.class);
+				final Map<?,?> stringMap = GSON.fromJson(requestString, Map.class);
 				final PreferenceDto dto = new PreferenceDto(stringMap);
 				Arrays.stream(launcher.getPreferences())
 						.flatMap(Arrays::stream)
