@@ -63,18 +63,38 @@ public class EntityEndpoint implements Endpoint {
 				}
 			else
 			{
-				final List<Dto> dtos;
 				if(pathOptions.hasId())
-					dtos = controller.getEntitiesByIds(type, pathOptions.getIds())
-						.stream()
-						.map(EntityUtils::toDtoSilent)
-						.collect(Collectors.toList());
+				{
+					final Readable entity = controller.getEntityById(type, pathOptions.getId());
+					final Dto dto = EntityUtils.toDto(entity);
+					responseString = GSON.toJson(dto);
+				}
 				else
-					dtos = controller.getEntities(type)
-						.stream()
-						.map(EntityUtils::toDtoSilent)
-						.collect(Collectors.toList());
-				responseString = GSON.toJson(dtos);
+				{
+
+					final String[] queryId = request.getParameterMap().get("id");
+					final List<Dto> dtos;
+					if(queryId == null)
+						dtos = controller.getEntities(type)
+							.stream()
+							.map(EntityUtils::toDtoSilent)
+							.collect(Collectors.toList());
+					else
+					{
+						final List<Integer> ids = Arrays.stream(queryId)
+							.filter(s -> s != null)
+							.map(s -> s.split("\\,"))
+							.flatMap(Arrays::stream)
+							.map(String::trim)
+							.map(Integer::parseInt)
+							.collect(Collectors.toList());
+						dtos = controller.getEntitiesByIds(type, ids)
+							.stream()
+							.map(EntityUtils::toDtoSilent)
+							.collect(Collectors.toList());
+					}
+					responseString = GSON.toJson(dtos);
+				}
 			}
 			response.getWriter().write(responseString);
 			return HttpServletResponse.SC_OK;
@@ -204,6 +224,8 @@ public class EntityEndpoint implements Endpoint {
 
 	private void updateMany(final Writable entity, final int index, final int[] entityIds) throws RoseException
 	{
+		if(entityIds == null)
+			return;
 		final Set<Integer> ids = Arrays.stream(entityIds).mapToObj(Integer::new).collect(Collectors.toSet());
 		final Set<? extends Readable> subEntities = new HashSet<>(entity.getEntityValueMany(index));
 		for(final Readable subEntity : subEntities)

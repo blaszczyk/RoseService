@@ -190,7 +190,7 @@ public class WebEndpoint implements Endpoint {
 		try
 		{
 			final String type = parameterMap.get("type")[0];
-			final Dto dto = TypeManager.getDtoClass(type).newInstance();
+			final Dto dto = TypeManager.newDtoInstance(type);
 			if(parameterMap.containsKey("id"))
 				dto.setId(Integer.parseInt(parameterMap.get("id")[0]));
 			final EntityModel entityModel = TypeManager.getEntityModel(dto);

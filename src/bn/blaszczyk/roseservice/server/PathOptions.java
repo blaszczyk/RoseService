@@ -1,8 +1,6 @@
 package bn.blaszczyk.roseservice.server;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.regex.Pattern;
 
 import bn.blaszczyk.rose.model.Readable;
@@ -10,11 +8,10 @@ import bn.blaszczyk.rosecommon.tools.TypeManager;
 
 public class PathOptions
 {
-	private static final Pattern COMMA_SEPARATED_INTS = Pattern.compile("^[0-9]+(\\,[0-9]+)*$");
+	private static final Pattern INT_PATTERN = Pattern.compile("^[0-9]+$");
 	
 	private final Class<? extends Readable> type;
 	private int id = -1;
-	private final List<Integer> ids = new ArrayList<>();
 	private boolean valid;
 	private String[] options;
 	
@@ -25,14 +22,9 @@ public class PathOptions
 		valid = type != null;
 		if(options.length > 1)
 		{
-			if( COMMA_SEPARATED_INTS.matcher(options[1]).matches() )
+			if( INT_PATTERN.matcher(options[1]).matches() )
 			{
-				Arrays.stream(options[1].split("\\,"))
-						.map(String::trim)
-						.map(Integer::parseInt)
-						.forEach(i -> ids.add(i));
-				if(!ids.isEmpty())
-					id = ids.get(0);
+				id = Integer.parseInt(options[1].trim());
 				if(options.length > 2)
 					this.options = Arrays.copyOfRange(options, 2, options.length);
 			}
@@ -46,11 +38,6 @@ public class PathOptions
 	public int getId()
 	{
 		return id;
-	}
-	
-	public List<Integer> getIds()
-	{
-		return ids;
 	}
 	
 	public boolean hasId()

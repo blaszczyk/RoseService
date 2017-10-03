@@ -41,18 +41,24 @@ public class Launcher {
 	
 	public void launch() throws RoseException
 	{
-		controller = ControllerBuilder.forDataBase()
-				.withCache()
-				.withConsistencyCheck()
-				.build();
 		handler = new RoseHandler();
-		
 		port = getIntegerValue(SERVICE_PORT);
 		server = new RoseServer(port, handler);
 		
-		registerEndpoints();
+		try
+		{
+			controller = ControllerBuilder.forDataBase()
+				.withCache()
+				.withConsistencyCheck()
+				.build();
+			new Thread(this::preloadEntities,"thread: load entities").start();
+		}
+		catch (RoseException e)
+		{
+			LOGGER.error("error initiating controller",e);
+		}
 		
-		new Thread(this::preloadEntities,"thread: load entities").start();
+		registerEndpoints();
 		
 		try
 		{
@@ -61,7 +67,7 @@ public class Launcher {
 		}
 		catch(RoseException e)
 		{
-			LOGGER.error("Error starting rose service", e);
+			LOGGER.error("error starting rose service", e);
 		}
 		
 		
@@ -80,12 +86,13 @@ public class Launcher {
 	{
 		try
 		{
-			controller.close();
+			if(controller != null)
+				controller.close();
 			server.stopServer();
 		}
 		catch (RoseException e)
 		{
-			LOGGER.error("Error stopping rose service", e);
+			LOGGER.error("error stopping rose service", e);
 		}
 		server = null;
 		handler = null;
@@ -111,7 +118,7 @@ public class Launcher {
 	{
 		if(args.length == 0)
 		{
-			System.out.println("No Rose model file specified.");
+			System.out.println("no rose model file specified.");
 			System.exit(1);
 		}
 		final String[] subArgs = Arrays.copyOfRange(args, 1, args.length);
@@ -125,7 +132,7 @@ public class Launcher {
 		}
 		catch (RoseException e) 
 		{
-			LogManager.getLogger(Launcher.class).error("Error launching Service",e);
+			LogManager.getLogger(Launcher.class).error("error launching Service",e);
 		}
 	}
 
