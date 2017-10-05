@@ -48,6 +48,8 @@ public class WebEndpoint implements Endpoint {
 				responseString = HtmlTools.startPage();
 			else if(path.equals("server"))
 				responseString = buildServerControls();
+			else if(path.startsWith("file/"))
+				responseString = HtmlTools.folderView(path.substring(5));
 			else
 			{
 				final PathOptions pathOptions = new PathOptions(path);
@@ -196,7 +198,10 @@ public class WebEndpoint implements Endpoint {
 			final EntityModel entityModel = TypeManager.getEntityModel(dto);
 			for(final Field field : entityModel.getFields())
 			{
-				final String stringValue = parameterMap.get(field.getName())[0];
+				final String[] stringValues = parameterMap.get(field.getName());
+				if(stringValues == null || stringValues.length == 0)
+					continue;
+				final String stringValue = stringValues[0];
 				if(field instanceof EnumField)
 					dto.setFieldValue(field.getName(), enumValue(field, stringValue));
 				else if(field instanceof PrimitiveField)
@@ -204,7 +209,10 @@ public class WebEndpoint implements Endpoint {
 			}
 			for(final EntityField field : entityModel.getEntityFields())
 			{
-				final String stringValue = parameterMap.get(field.getName())[0];
+				final String[] stringValues = parameterMap.get(field.getName());
+				if(stringValues == null || stringValues.length == 0)
+					continue;
+				final String stringValue = stringValues[0];
 				if(field.getType().isSecondMany())
 					dto.setEntityIds(field.getName(), parseIds(stringValue));
 				else

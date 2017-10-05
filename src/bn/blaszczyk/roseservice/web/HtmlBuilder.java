@@ -32,6 +32,12 @@ public class HtmlBuilder {
 			.append("</h2>");
 		return this;
 	}
+
+	public HtmlBuilder br()
+	{
+		sb.append("<br/>");
+		return this;
+	}
 	
 	public String build()
 	{

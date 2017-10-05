@@ -1,5 +1,6 @@
 package bn.blaszczyk.roseservice.web;
 
+import java.io.File;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
@@ -19,6 +20,7 @@ import bn.blaszczyk.rose.model.PrimitiveField;
 import bn.blaszczyk.rose.model.PrimitiveType;
 import bn.blaszczyk.rosecommon.dto.PreferenceDto;
 import bn.blaszczyk.rosecommon.tools.CommonPreference;
+import bn.blaszczyk.rosecommon.tools.FileConverter;
 import bn.blaszczyk.rosecommon.tools.Preference;
 import bn.blaszczyk.rosecommon.tools.TypeManager;
 import bn.blaszczyk.roseservice.tools.ServicePreference;
@@ -33,8 +35,10 @@ public class HtmlTools {
 	{
 		final HtmlBuilder hb = new HtmlBuilder();
 		hb.append(linkToWeb("Server", "server"))
+			.append(" - ")
+			.append(linkToWeb("Files", "file/"))
 			.h1("Start");
-		for(Class<?> type : TypeManager.getEntityClasses())
+		for(final Class<?> type : TypeManager.getEntityClasses())
 		{
 			final String name = type.getSimpleName();
 			hb.append(linkToWeb(name, name.toLowerCase()))
@@ -343,5 +347,27 @@ public class HtmlTools {
 			.append("</option>");
 		sb.append("</select>");
 		return sb.toString();
+	}
+
+	public static String folderView(final String path)
+	{
+		final File folder = new FileConverter().fromPath(path);
+		final HtmlBuilder hb = new HtmlBuilder();
+		hb.append(linkToWeb("start"));
+		if(folder.isDirectory())
+		{
+			hb.h2("file:" + path);
+			if(path.contains("/"))
+				hb.append(linkToWeb("..", "file", path.substring(0, path.indexOf('/')))).br();
+			for(final File file : folder.listFiles())
+			{
+				final String subpath = "file" + (path == null || path.length() == 0 ? "" : "/") + path;
+				if(file.isDirectory())
+					hb.append(linkToWeb(file.getName(), subpath, file.getName())).br();
+				else
+					hb.append(linkToWeb(file.getName(), "..", subpath, file.getName())).br();
+			}
+		}
+		return hb.build();
 	}
 }
