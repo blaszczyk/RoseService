@@ -1,6 +1,9 @@
 package bn.blaszczyk.roseservice.web;
 
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -9,8 +12,12 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+import javax.servlet.MultipartConfigElement;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.Part;
+
+import org.eclipse.jetty.server.Request;
 
 import bn.blaszczyk.rose.model.Readable;
 import bn.blaszczyk.rose.RoseException;
@@ -23,6 +30,7 @@ import bn.blaszczyk.rose.model.EntityField;
 import bn.blaszczyk.rosecommon.client.RoseClient;
 import bn.blaszczyk.rosecommon.client.ServiceConfigClient;
 import bn.blaszczyk.rosecommon.dto.PreferenceDto;
+import bn.blaszczyk.rosecommon.tools.FileConverter;
 import bn.blaszczyk.rosecommon.tools.TypeManager;
 import bn.blaszczyk.roseservice.server.Endpoint;
 import bn.blaszczyk.roseservice.server.PathOptions;
@@ -94,6 +102,17 @@ public class WebEndpoint implements Endpoint {
 				final PreferenceDto dto = new PreferenceDto(request.getParameterMap());
 				serviceConfigClient.putPreferences(dto);
 				responseString = buildServerControls();
+			}
+			else if(path.startsWith("file/"))
+			{
+				request.setAttribute(Request.__MULTIPART_CONFIG_ELEMENT, new MultipartConfigElement("/temp"));
+				final Part filePart = request.getPart("file");
+				final String folder = path.substring(5);
+				final String fileName = filePart.getSubmittedFileName();
+				final FileConverter converter = new FileConverter();
+				final File file = converter.fromPath(folder + "/" + fileName);
+				Files.copy(filePart.getInputStream(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+				responseString = HtmlTools.folderView(folder);
 			}
 			else
 			{
@@ -248,7 +267,7 @@ public class WebEndpoint implements Endpoint {
 			}
 			catch (ParseException e)
 			{
-				throw new RoseException("error parsing date " + stringValue, e);
+				return null;
 			}
 		case INT:
 			return Integer.parseInt(stringValue);

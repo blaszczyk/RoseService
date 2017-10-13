@@ -41,7 +41,11 @@ public class ServerEndpoint implements Endpoint {
 		try
 		{
 			String responseString = "";
-			if(path.equals("status"))
+			if(path.equals("ping"))
+			{
+				responseString = Long.toString(System.currentTimeMillis());
+			}
+			else if(path.equals("status"))
 			{
 				final Map<String,String> status = server.getHandler().getStatus();
 				status.put("uptime jvm", formatTime(launcher.getJvmUptime()));

@@ -173,12 +173,13 @@ public class HtmlTools {
 	public static String input(final String type, final String name, final Object value, final String... attributes)
 	{
 		final StringBuilder sb = new StringBuilder("<input type=\"")
-				.append(type)
-				.append("\" name=\"")
-				.append(name)
-				.append("\" value=\"")
-				.append(value)
-				.append("\"");
+			.append(type)
+			.append("\" name=\"")
+			.append(name);
+		if(value != null)
+			sb.append("\" value=\"")
+			.append(value);
+		sb.append("\"");
 		for(final String attribute : attributes)
 			sb.append(" ").append(attribute);
 		sb.append(">");
@@ -359,6 +360,10 @@ public class HtmlTools {
 			hb.h2("file:" + path);
 			if(path.contains("/"))
 				hb.append(linkToWeb("..", "file", path.substring(0, path.indexOf('/')))).br();
+			hb.append("<form enctype=\"multipart/form-data\" method=\"post\" action=\"" + path + "\">")
+				.append(input("file", "file", "choose file"))
+				.append(input("submit", "upload", "upload"))
+				.append("</form>");
 			for(final File file : folder.listFiles())
 			{
 				final String subpath = "file" + (path == null || path.length() == 0 ? "" : "/") + path;
