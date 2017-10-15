@@ -288,7 +288,7 @@ public class HtmlTools {
 				.append(linkToWeb(String.valueOf(dto.getId()), entityModel.getObjectName(), dto.getId()  ));
 			for(final Field field : entityModel.getFields())
 				sb.append("</td><td>")
-					.append(linkToWeb(primitiveStringValue(field, dto), entityModel.getObjectName(), dto.getId() ));
+					.append(primitiveStringValue(field, dto));
 			sb.append("</td></tr>");
 		}
 		return sb.append("</table>").toString();
