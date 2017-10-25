@@ -282,6 +282,7 @@ public class HtmlTools {
 			sb.append("</th><th>")
 				.append(field.getName());
 		sb.append("</th></tr>");
+		dtos.sort((d1,d2) -> Integer.compare(d1.getId(), d2.getId()));
 		for(final Dto dto : dtos)
 		{
 			sb.append("<tr><td>")
