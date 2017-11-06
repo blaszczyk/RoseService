@@ -3,6 +3,7 @@ package bn.blaszczyk.roseservice.web;
 import java.io.File;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Date;
@@ -13,6 +14,7 @@ import java.util.stream.Collectors;
 
 import bn.blaszczyk.rose.model.EntityModel;
 import bn.blaszczyk.rose.model.Dto;
+import bn.blaszczyk.rose.model.DtoContainer;
 import bn.blaszczyk.rose.model.EntityField;
 import bn.blaszczyk.rose.model.EnumField;
 import bn.blaszczyk.rose.model.Field;
@@ -20,6 +22,7 @@ import bn.blaszczyk.rose.model.PrimitiveField;
 import bn.blaszczyk.rose.model.PrimitiveType;
 import bn.blaszczyk.rosecommon.dto.PreferenceDto;
 import bn.blaszczyk.rosecommon.tools.CommonPreference;
+import bn.blaszczyk.rosecommon.tools.EntityUtils;
 import bn.blaszczyk.rosecommon.tools.FileConverter;
 import bn.blaszczyk.rosecommon.tools.Preference;
 import bn.blaszczyk.rosecommon.tools.TypeManager;
@@ -47,7 +50,7 @@ public class HtmlTools {
 		return hb.build();
 	}
 	
-	public static String entityList(final EntityModel entityModel, final List<Dto> dtos)
+	public static String entityList(final EntityModel entityModel, final List<Dto> dtos, final DtoContainer container)
 	{
 		final HtmlBuilder hb = new HtmlBuilder();
 		hb.append(linkToWeb("start"))
@@ -56,11 +59,11 @@ public class HtmlTools {
 			.append(input("submit", "", "create"))
 			.append(input("hidden", "type", entityModel.getObjectName()))
 			.append("</form>")
-			.append(entityTable(entityModel, dtos));			
+			.append(entityTable(entityModel, dtos, container));
 		return hb.build();
 	}
 
-	public static String entityView(final EntityModel entityModel, final Dto dto, final List<List<Dto>> subDtos)
+	public static String entityView(final EntityModel entityModel, final Dto dto, final DtoContainer container)
 	{
 		final HtmlBuilder hb = new HtmlBuilder();
 		hb.append(linkToWeb("start"))
@@ -72,16 +75,20 @@ public class HtmlTools {
 			.append(primitivesTable(entityModel, dto));
 		for(int i = 0; i < entityModel.getEntityFields().size(); i++)
 		{
-			final List<Dto> dtos = subDtos.get(i);
-			if(dtos.isEmpty())
-				continue;
 			final EntityField field = entityModel.getEntityFields().get(i);
+			final String fieldName = field.getName();
+			final String entityName = field.getEntityName();
 			if(field.getType().isSecondMany())
+			{
+				final List<Dto> dtos = new ArrayList<>(dto.getEntityIds(fieldName).length);
+				for(final int id : dto.getEntityIds(fieldName))
+					dtos.add(container.get(entityName, id));
 				hb.h2(field.getCapitalName())
-					.append(entityTable(field.getEntityModel(), dtos));
+					.append(entityTable(field.getEntityModel(), dtos, container));
+			}
 			else
 			{
-				final Dto subDto = dtos.get(0);
+				final Dto subDto = container.get(entityName, dto.getEntityId(fieldName));
 				hb.h2(linkToWeb(field.getCapitalName(), field.getEntityModel().getObjectName(), subDto.getId()))
 					.append(primitivesTable(field.getEntityModel(), subDto));
 			}
@@ -113,6 +120,8 @@ public class HtmlTools {
 		final HtmlBuilder hb = new HtmlBuilder();
 		hb.append(linkToWeb("start"))
 			.h1("Server Controls")
+			.append(postButton("/web/restart", "Restart"))
+			.append(postButton("/web/stop", "Stop"))
 			.h2("Status")
 			.append("<table>");
 		status.entrySet().stream()
@@ -125,8 +134,6 @@ public class HtmlTools {
 					.append("</td></tr>");
 			});
 		hb.append("</table>")
-			.append(postButton("/web/restart", "Restart"))
-			.append(postButton("/web/stop", "Stop"))
 			.h2("Configuration")
 			.append("<form method=\"post\" action=\"/web/server\" accept-charset=\"UTF-8\">")
 			.append(preferencesInputTable(preferences))
@@ -188,7 +195,7 @@ public class HtmlTools {
 	
 	private static String primitivesTable(final EntityModel entityModel, final Dto dto)
 	{
-		final StringBuilder sb = new StringBuilder("<table>");
+		final StringBuilder sb = new StringBuilder("<table cellPadding=\"3\">");
 		for(final Field field : entityModel.getFields()) {
 			final String fieldName = field.getName();
 			sb.append("<tr><td>")
@@ -223,9 +230,18 @@ public class HtmlTools {
 		}
 	}
 	
+	private static String entityStringValue(final EntityField field, final Dto dto, final DtoContainer container)
+	{
+		final int entityId = dto.getEntityId(field.getName());
+		final Dto subDto = container.get(field.getEntityModel().getSimpleClassName(), entityId);
+		if(subDto == null)
+			return "-";
+		return EntityUtils.toString(subDto);
+	}
+	
 	private static String primitivesInputTable(final EntityModel entityModel, final Dto dto)
 	{
-		final StringBuilder sb = new StringBuilder("<table>");
+		final StringBuilder sb = new StringBuilder("<table cellPadding=\"3\">");
 		for(final Field field : entityModel.getFields())
 		{
 			final String fieldName = field.getName();
@@ -275,21 +291,29 @@ public class HtmlTools {
 		return sb.append("</table>").toString();
 	}
 	
-	private static String entityTable(final EntityModel entityModel, final List<Dto> dtos)
+	private static String entityTable(final EntityModel entityModel, final List<Dto> dtos, final DtoContainer container)
 	{
-		final StringBuilder sb = new StringBuilder("<table><tr><th>id");
-		for(final Field field : entityModel.getFields())
-			sb.append("</th><th>")
-				.append(field.getName());
+		final StringBuilder sb = new StringBuilder("<table cellPadding=\"3\"><tr><th>id");
+		entityModel.getFields().stream()
+			.map(Field::getName)
+			.forEach(f -> sb.append("</th><th>").append(f));
+		entityModel.getEntityFields().stream()
+			.filter(f -> !f.getType().isSecondMany())
+			.map(EntityField::getName)
+			.forEach(f -> sb.append("</th><th>").append(f));
 		sb.append("</th></tr>");
 		dtos.sort((d1,d2) -> Integer.compare(d1.getId(), d2.getId()));
 		for(final Dto dto : dtos)
 		{
 			sb.append("<tr><td>")
 				.append(linkToWeb(String.valueOf(dto.getId()), entityModel.getObjectName(), dto.getId()  ));
-			for(final Field field : entityModel.getFields())
-				sb.append("</td><td>")
-					.append(primitiveStringValue(field, dto));
+			entityModel.getFields().stream()
+				.map(f -> primitiveStringValue(f, dto))
+				.forEach(f -> sb.append("</td><td>").append(f));
+			entityModel.getEntityFields().stream()
+				.filter(f -> !f.getType().isSecondMany())
+				.map(f -> entityStringValue(f, dto, container))
+				.forEach(f -> sb.append("</td><td>").append(f));
 			sb.append("</td></tr>");
 		}
 		return sb.append("</table>").toString();

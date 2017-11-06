@@ -5,9 +5,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.text.ParseException;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -26,9 +24,11 @@ import bn.blaszczyk.rose.model.EnumField;
 import bn.blaszczyk.rose.model.Field;
 import bn.blaszczyk.rose.model.PrimitiveField;
 import bn.blaszczyk.rose.model.Dto;
+import bn.blaszczyk.rose.model.DtoContainer;
 import bn.blaszczyk.rose.model.EntityField;
 import bn.blaszczyk.rosecommon.client.RoseClient;
 import bn.blaszczyk.rosecommon.client.ServiceConfigClient;
+import bn.blaszczyk.rosecommon.dto.DtoContainerRequest;
 import bn.blaszczyk.rosecommon.dto.PreferenceDto;
 import bn.blaszczyk.rosecommon.tools.FileConverter;
 import bn.blaszczyk.rosecommon.tools.TypeManager;
@@ -61,7 +61,7 @@ public class WebEndpoint implements Endpoint {
 			else
 			{
 				final PathOptions pathOptions = new PathOptions(path);
-				if(!pathOptions.isValid())
+				if(!pathOptions.hasType())
 					return HttpServletResponse.SC_NOT_FOUND;
 				final Class<? extends Readable> type = pathOptions.getType();
 				final EntityModel entityModel = TypeManager.getEntityModel(type);
@@ -90,7 +90,7 @@ public class WebEndpoint implements Endpoint {
 			if(path.equals("stop"))
 			{
 				serviceConfigClient.postStopRequest();
-				responseString = new HtmlBuilder().h2("Server stopped").build();
+				responseString = new HtmlBuilder().h2("Server stopped").append(HtmlTools.linkToWeb("go to start")).build();
 			}
 			else if(path.equals("restart"))
 			{
@@ -117,7 +117,7 @@ public class WebEndpoint implements Endpoint {
 			else
 			{
 				final PathOptions pathOptions = new PathOptions(path);
-				if(!pathOptions.isValid() || !pathOptions.hasOptions())
+				if(!pathOptions.hasType() || !pathOptions.hasOptions())
 					return HttpServletResponse.SC_NOT_FOUND;
 				
 				switch (pathOptions.getOptions()[0])
@@ -164,7 +164,10 @@ public class WebEndpoint implements Endpoint {
 	private String buildEntitiesList(final EntityModel entityModel) throws RoseException
 	{
 		final List<Dto> dtos = client.getDtos(entityModel.getObjectName(), TypeManager.getClass(entityModel));
-		return HtmlTools.entityList(entityModel,dtos);
+		final DtoContainerRequest request = new DtoContainerRequest();
+		dtos.forEach(request::requestOwners);
+		final DtoContainer container = client.getContainer(request);
+		return HtmlTools.entityList(entityModel,dtos,container);
 	}
 
 	private String buildEntityEdit(final EntityModel entityModel, final int id) throws RoseException
@@ -177,25 +180,41 @@ public class WebEndpoint implements Endpoint {
 	{
 		final Class<? extends Readable> type = TypeManager.getClass(entityModel);
 		final Dto dto = client.getDto(type, id);
-		final List<List<Dto>> subDtos = new ArrayList<>(entityModel.getEntityFields().size());
+
+		final DtoContainerRequest request = new DtoContainerRequest();
 		for(final EntityField field : entityModel.getEntityFields())
 		{
 			final String fieldName = field.getName();
-			final Class<? extends Readable> subType = TypeManager.getClass(field.getEntityModel());
+			final String entityName = field.getEntityName();
 			if(field.getType().isSecondMany())
-			{
-				subDtos.add(client.getDtos(subType,dto.getEntityIds(fieldName)));
-			}
+				for(final int subId : dto.getEntityIds(fieldName))
+					request.request(entityName, subId);
 			else
-			{
-				final int subId = dto.getEntityId(fieldName);
-				if(subId < 0)
-					subDtos.add(Collections.emptyList());
-				else
-					subDtos.add(Collections.singletonList(client.getDto(subType, subId)));
-			}
+				request.request(entityName, dto.getEntityId(fieldName));
 		}
-		return HtmlTools.entityView(entityModel, dto,subDtos);
+		final DtoContainer container = client.getContainer(request);
+		container.put(dto);
+
+		final DtoContainerRequest requestOwners = new DtoContainerRequest();
+		for(final EntityField field : entityModel.getEntityFields())
+		{
+			final String fieldName = field.getName();
+			final String entityName = field.getEntityName();
+			if(field.getType().isSecondMany())
+				for(final int subId : dto.getEntityIds(fieldName))
+					requestOwners.requestOwners(container.get(entityName, subId));
+			else
+				requestOwners.requestOwners(container.get(entityName, dto.getEntityId(fieldName)));
+		}
+		requestOwners.removeAll(container);
+
+		if(!requestOwners.isEmpty())
+		{
+			final DtoContainer containerOwners = client.getContainer(requestOwners);
+			container.putAll(containerOwners);
+		}
+
+		return HtmlTools.entityView(entityModel, dto, container);
 	}
 	
 	private String buildServerControls() throws RoseException

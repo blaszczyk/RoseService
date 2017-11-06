@@ -48,8 +48,8 @@ public class RoseHandler extends AbstractHandler {
 	public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response)
 			throws IOException, ServletException
 	{
-		final String logContext = request.getMethod() + " at " + target + " from " + request.getRemoteHost();
-		LOGGER.info("request: " + logContext);
+		final String requestSummary = getRequestSummary(request);
+		LOGGER.info(requestSummary);
 		if(!enabled)
 		{
 			response.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
@@ -62,7 +62,7 @@ public class RoseHandler extends AbstractHandler {
 		{
 			response.setStatus(HttpServletResponse.SC_NOT_FOUND);
 			baseRequest.setHandled(true);
-			LOGGER.warn("Endpoint not found: " + logContext);
+			LOGGER.warn("Endpoint not found: " + requestSummary);
 			return;
 		}
 		int responseCode = HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
@@ -90,25 +90,27 @@ public class RoseHandler extends AbstractHandler {
 		}
 		catch(RoseException e)
 		{
+			LOGGER.error("error", e);
+			responseCode = HttpServletResponse.SC_BAD_REQUEST;
 			response.getWriter().write(e.getFullMessage());
-			LOGGER.error("internal server error", e);
 		}
 		catch(Exception e)
 		{
-			response.getWriter().write(e.getMessage());
 			LOGGER.error("internal server error", e);
+			response.getWriter().write(e.getMessage());
 		}
 		finally
 		{
 			response.setStatus(responseCode);
+			response.setCharacterEncoding("UTF-8");
 			if(responseCode >= 300)
 			{
-				LOGGER.error( "responding " + responseCode + " to " + logContext);
+				LOGGER.error( "responding " + responseCode + " to " + requestSummary);
 				failedRequestCount++;
 			}
 			requestCount++;
 			baseRequest.setHandled(true);
-			LOGGER.debug("request handled: " + logContext);
+			LOGGER.debug("request handled: " + requestSummary);
 		}
 	}
 
@@ -124,6 +126,19 @@ public class RoseHandler extends AbstractHandler {
 	public void setEnabled(boolean enabled)
 	{
 		this.enabled  = enabled;
+	}
+
+	private static String getRequestSummary(final HttpServletRequest request)
+	{
+		final StringBuilder sb = new StringBuilder(request.getRemoteHost())
+				.append(" - ")
+				.append(request.getMethod())
+				.append(" ")
+				.append(request.getPathInfo());
+		if(request.getQueryString() != null)
+			sb.append("?")
+				.append(request.getQueryString());
+		return sb.toString();
 	}
 	
 }

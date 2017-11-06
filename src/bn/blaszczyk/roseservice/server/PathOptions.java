@@ -12,14 +12,12 @@ public class PathOptions
 	
 	private final Class<? extends Readable> type;
 	private int id = -1;
-	private boolean valid;
 	private String[] options;
 	
 	public PathOptions(final String path)
 	{
 		final String[] options = path.split("\\/");
 		type = TypeManager.getClass(options[0]);
-		valid = type != null;
 		if(options.length > 1)
 		{
 			if( INT_PATTERN.matcher(options[1]).matches() )
@@ -45,9 +43,9 @@ public class PathOptions
 		return id >= 0;
 	}
 
-	public boolean isValid()
+	public boolean hasType()
 	{
-		return valid;
+		return type != null;
 	}
 
 	public Class<? extends Readable> getType()
@@ -63,14 +61,6 @@ public class PathOptions
 	public String[] getOptions()
 	{
 		return options;
-	}
-	
-	@Override
-	public String toString()
-	{
-		if(!valid)
-			return "Invalid Path Options";
-		return type.getSimpleName() + " id=" + id;
 	}
 	
 }

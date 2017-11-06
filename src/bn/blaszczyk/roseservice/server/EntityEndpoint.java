@@ -3,6 +3,7 @@ package bn.blaszczyk.roseservice.server;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -17,6 +18,7 @@ import com.google.gson.Gson;
 
 import bn.blaszczyk.rose.RoseException;
 import bn.blaszczyk.rose.model.Dto;
+import bn.blaszczyk.rose.model.DtoContainer;
 import bn.blaszczyk.rose.model.EntityModel;
 import bn.blaszczyk.rose.model.Field;
 import bn.blaszczyk.rose.model.Writable;
@@ -41,29 +43,43 @@ public class EntityEndpoint implements Endpoint {
 	@Override
 	public int get(final String path, final HttpServletRequest request, final HttpServletResponse response) throws RoseException
 	{
-		final PathOptions pathOptions = new PathOptions(path);
-		if(!pathOptions.isValid())
-			return HttpServletResponse.SC_NOT_FOUND;
 		try
 		{
-			final Class<? extends Readable> type = pathOptions.getType();
 			final String responseString;
-			if(pathOptions.hasOptions())
-				switch (pathOptions.getOptions()[0])
+			if(path == null || path.isEmpty())
+			{
+				final DtoContainer container = TypeManager.newDtoContainer();
+				for(final Class<? extends Readable> type : TypeManager.getEntityClasses())
 				{
-				case "count":
-					responseString = Integer.toString(controller.getEntityCount(type));
-					break;
-				case "id":
-					final List<Integer> ids = controller.getIds(type);
-					responseString = GSON.toJson(ids);
-					break;
-				default:
-					return HttpServletResponse.SC_NOT_FOUND;
+					final String typeName = type.getSimpleName().toLowerCase();
+					final List<Integer> ids = parseIds(request.getParameterValues(typeName));
+					controller.getEntitiesByIds(type, ids)
+						.stream()
+						.map(EntityUtils::toDtoSilent)
+						.forEach(container::put);
 				}
+				responseString = GSON.toJson(container);
+			}
 			else
 			{
-				if(pathOptions.hasId())
+				final PathOptions pathOptions = new PathOptions(path);
+				if(!pathOptions.hasType())
+					return HttpServletResponse.SC_NOT_FOUND;
+				final Class<? extends Readable> type = pathOptions.getType();
+				if(pathOptions.hasOptions())
+					switch (pathOptions.getOptions()[0])
+					{
+					case "count":
+						responseString = Integer.toString(controller.getEntityCount(type));
+						break;
+					case "id":
+						final List<Integer> ids = controller.getIds(type);
+						responseString = GSON.toJson(ids);
+						break;
+					default:
+						return HttpServletResponse.SC_NOT_FOUND;
+					}
+				else if(pathOptions.hasId())
 				{
 					final Readable entity = controller.getEntityById(type, pathOptions.getId());
 					final Dto dto = EntityUtils.toDto(entity);
@@ -71,7 +87,6 @@ public class EntityEndpoint implements Endpoint {
 				}
 				else
 				{
-
 					final String[] queryId = request.getParameterMap().get("id");
 					final List<Dto> dtos;
 					if(queryId == null)
@@ -81,13 +96,7 @@ public class EntityEndpoint implements Endpoint {
 							.collect(Collectors.toList());
 					else
 					{
-						final List<Integer> ids = Arrays.stream(queryId)
-							.filter(s -> s != null)
-							.map(s -> s.split("\\,"))
-							.flatMap(Arrays::stream)
-							.map(String::trim)
-							.map(Integer::parseInt)
-							.collect(Collectors.toList());
+						final List<Integer> ids = parseIds(queryId);
 						dtos = controller.getEntitiesByIds(type, ids)
 							.stream()
 							.map(EntityUtils::toDtoSilent)
@@ -104,14 +113,14 @@ public class EntityEndpoint implements Endpoint {
 			throw RoseException.wrap(e,"error handling GET request");
 		}
 	}
-	
+
 	@Override
 	public int post(final String path, final HttpServletRequest request, final HttpServletResponse response) throws RoseException
 	{
 		try
 		{
 			final PathOptions pathOptions = new PathOptions(path);
-			if(!pathOptions.isValid() || pathOptions.hasId() || pathOptions.hasOptions())
+			if(!pathOptions.hasType() || pathOptions.hasId() || pathOptions.hasOptions())
 				return HttpServletResponse.SC_NOT_FOUND;
 			
 			final Dto dto = getRequestDto(request, pathOptions.getType());
@@ -134,7 +143,7 @@ public class EntityEndpoint implements Endpoint {
 		try
 		{
 			final PathOptions pathOptions = new PathOptions(path);
-			if(!pathOptions.isValid())
+			if(!pathOptions.hasType())
 				return HttpServletResponse.SC_NOT_FOUND;
 			final Dto dto = getRequestDto(request,pathOptions.getType());
 			LOGGER.debug("putting dto " + dto);
@@ -156,7 +165,7 @@ public class EntityEndpoint implements Endpoint {
 		try
 		{
 			final PathOptions pathOptions = new PathOptions(path);
-			if(!pathOptions.isValid())
+			if(!pathOptions.hasType())
 				return HttpServletResponse.SC_NOT_FOUND;
 			if(!pathOptions.hasId() || pathOptions.hasOptions())
 				return HttpServletResponse.SC_NOT_FOUND;
@@ -242,6 +251,20 @@ public class EntityEndpoint implements Endpoint {
 			entity.addEntity(index, subEntity);
 			controller.update(subEntity);
 		}
+	}
+
+	private static List<Integer> parseIds(final String[] parameterValues)
+	{
+		if(parameterValues == null || parameterValues.length == 0)
+			return Collections.emptyList();
+		return Arrays.stream(parameterValues)
+			.filter(s -> s != null)
+			.map(s -> s.split("\\D+"))
+			.flatMap(Arrays::stream)
+			.map(String::trim)
+			.filter(s -> !s.isEmpty())
+			.map(Integer::parseInt)
+			.collect(Collectors.toList());
 	}
 
 }
