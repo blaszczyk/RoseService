@@ -89,8 +89,9 @@ public class HtmlTools {
 			else
 			{
 				final Dto subDto = container.get(entityName, dto.getEntityId(fieldName));
-				hb.h2(linkToWeb(field.getCapitalName(), field.getEntityModel().getObjectName(), subDto.getId()))
-					.append(primitivesTable(field.getEntityModel(), subDto));
+				if(subDto != null)
+					hb.h2(linkToWeb(field.getCapitalName(), field.getEntityModel().getObjectName(), subDto.getId()))
+						.append(primitivesTable(field.getEntityModel(), subDto));
 			}
 		}
 		return hb.build();
@@ -384,18 +385,18 @@ public class HtmlTools {
 		{
 			hb.h2("file:" + path);
 			if(path.contains("/"))
-				hb.append(linkToWeb("..", "file", path.substring(0, path.indexOf('/')))).br();
+				hb.append(linkToWeb("..", "file", path.substring(0, path.lastIndexOf('/')))).br();
 			hb.append("<form enctype=\"multipart/form-data\" method=\"post\" action=\"" + path + "\">")
 				.append(input("file", "file", "choose file"))
 				.append(input("submit", "upload", "upload"))
 				.append("</form>");
+			final String subpath = "file" + (path == null || path.length() == 0 ? "" : "/") + path;
 			for(final File file : folder.listFiles())
 			{
-				final String subpath = "file" + (path == null || path.length() == 0 ? "" : "/") + path;
 				if(file.isDirectory())
 					hb.append(linkToWeb(file.getName(), subpath, file.getName())).br();
 				else
-					hb.append(linkToWeb(file.getName(), "..", subpath, file.getName())).br();
+					hb.append(linkTo(file.getName(), subpath, file.getName())).br();
 			}
 		}
 		return hb.build();

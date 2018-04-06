@@ -35,9 +35,9 @@ public class Launcher {
 	
 	private Integer port;
 
-	private final long jvmStartTime = System.currentTimeMillis();
+	private static final long jvmStartTime = System.currentTimeMillis();
 
-	private long serviceStartTime = System.currentTimeMillis();
+	private long serviceStartTime = jvmStartTime;
 	
 	public void launch() throws RoseException
 	{
@@ -48,7 +48,6 @@ public class Launcher {
 		try
 		{
 			controller = ControllerBuilder.forDataBase()
-				.withCache()
 				.withConsistencyCheck()
 				.build();
 			new Thread(this::preloadEntities,"thread: load entities").start();
@@ -124,7 +123,7 @@ public class Launcher {
 		final String[] subArgs = Arrays.copyOfRange(args, 1, args.length);
 		Preferences.setMainClass(RoseServer.class);
 		Preferences.cacheArguments(subArgs, PREFERENCES);
-		try 
+		try
 		{
 			TypeManager.parseRoseFile(args[0]);
 			LoggerConfigurator.configureLogger(CommonPreference.BASE_DIRECTORY, CommonPreference.LOG_LEVEL);
@@ -141,7 +140,10 @@ public class Launcher {
 		try
 		{
 			for(Class<? extends Readable> type : TypeManager.getEntityClasses())
+			{
 				controller.getEntities(type);
+				LOGGER.info("load " + controller.getEntityCount(type) + " instances of " + type.getSimpleName());
+			}
 		}
 		catch (RoseException e) 
 		{

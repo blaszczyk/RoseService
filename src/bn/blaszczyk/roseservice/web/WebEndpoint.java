@@ -204,7 +204,11 @@ public class WebEndpoint implements Endpoint {
 				for(final int subId : dto.getEntityIds(fieldName))
 					requestOwners.requestOwners(container.get(entityName, subId));
 			else
-				requestOwners.requestOwners(container.get(entityName, dto.getEntityId(fieldName)));
+			{
+				final int subId = dto.getEntityId(fieldName);
+				if(subId > 0)
+					requestOwners.requestOwners(container.get(entityName, subId));
+			}
 		}
 		requestOwners.removeAll(container);
 

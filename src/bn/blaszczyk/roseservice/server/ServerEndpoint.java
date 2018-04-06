@@ -1,6 +1,7 @@
 package bn.blaszczyk.roseservice.server;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -15,9 +16,11 @@ import bn.blaszczyk.rose.RoseException;
 import bn.blaszczyk.rosecommon.client.CommonClient;
 import bn.blaszczyk.rosecommon.client.FileClient;
 import bn.blaszczyk.rosecommon.client.ServiceConfigClient;
+import bn.blaszczyk.rosecommon.dto.EntityModelDto;
 import bn.blaszczyk.rosecommon.dto.PreferenceDto;
 import bn.blaszczyk.rosecommon.tools.CommonPreference;
 import bn.blaszczyk.rosecommon.tools.Preferences;
+import bn.blaszczyk.rosecommon.tools.TypeManager;
 import bn.blaszczyk.roseservice.Launcher;
 
 import static bn.blaszczyk.rosecommon.tools.Preferences.*;
@@ -56,6 +59,13 @@ public class ServerEndpoint implements Endpoint {
 			{
 				final PreferenceDto dto = createAllPreferencesDto();
 				responseString = GSON.toJson(dto);
+			}
+			else if(path.equals("models"))
+			{
+				final List<EntityModelDto> entityModelDtos = TypeManager.getEntityModels().stream()
+					.map(EntityModelDto::new)
+					.collect(Collectors.toList());
+				responseString = GSON.toJson(entityModelDtos);
 			}
 			else
 				return HttpServletResponse.SC_NOT_FOUND;

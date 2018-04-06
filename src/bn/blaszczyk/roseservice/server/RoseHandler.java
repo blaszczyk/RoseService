@@ -1,8 +1,10 @@
 package bn.blaszczyk.roseservice.server;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -38,6 +40,7 @@ public class RoseHandler extends AbstractHandler {
 				return;
 		registerEndpoint(path, endpoint);
 	}
+	
 	public void registerEndpoint(final String path, final Endpoint endpoint)
 	{
 		LOGGER.info("registering endpoint " + endpoint.getClass().getSimpleName() + " at /" + path);
@@ -135,10 +138,22 @@ public class RoseHandler extends AbstractHandler {
 				.append(request.getMethod())
 				.append(" ")
 				.append(request.getPathInfo());
-		if(request.getQueryString() != null)
+		if(!request.getParameterMap().isEmpty())
 			sb.append("?")
-				.append(request.getQueryString());
+				.append(request.getParameterMap()
+						.entrySet()
+						.stream()
+						.map(e -> joinQuery(e.getKey(), e.getValue()))
+						.collect(Collectors.joining("&")));
 		return sb.toString();
+	}
+	
+	private static String joinQuery(final String name, final String[] values)
+	{
+		return new StringBuilder(name)
+				.append("=")
+				.append(Arrays.stream(values).collect(Collectors.joining(",")))
+				.toString();
 	}
 	
 }

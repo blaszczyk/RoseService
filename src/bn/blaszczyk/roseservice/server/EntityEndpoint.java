@@ -23,7 +23,11 @@ import bn.blaszczyk.rose.model.EntityModel;
 import bn.blaszczyk.rose.model.Field;
 import bn.blaszczyk.rose.model.Writable;
 import bn.blaszczyk.rose.model.Readable;
+import bn.blaszczyk.rose.model.Representable;
 import bn.blaszczyk.rosecommon.controller.ModelController;
+import bn.blaszczyk.rosecommon.proxy.EntityAccess;
+import bn.blaszczyk.rosecommon.proxy.EntityAccessAdapter;
+import bn.blaszczyk.rosecommon.proxy.RoseProxy;
 import bn.blaszczyk.rosecommon.tools.EntityUtils;
 import bn.blaszczyk.rosecommon.tools.TypeManager;
 
@@ -106,6 +110,7 @@ public class EntityEndpoint implements Endpoint {
 				}
 			}
 			response.getWriter().write(responseString);
+			response.setHeader("Content", "application/json");
 			return HttpServletResponse.SC_OK;
 		}
 		catch (Exception e) 
@@ -125,8 +130,14 @@ public class EntityEndpoint implements Endpoint {
 			
 			final Dto dto = getRequestDto(request, pathOptions.getType());
 			LOGGER.debug("posting dto " + dto );
-			final Writable entity = (Writable) controller.createNew(TypeManager.getClass(dto));
+
+			final Writable entity = (Writable) controller.createNew(TypeManager.getClass(dto).asSubclass(Writable.class));
 			update(entity, dto);
+			
+//			TODO: test sth. like this:
+//			final Writable entity = RoseProxy.create(dto, new EntityAccessAdapter(controller));
+//			controller.createNew(entity);
+						
 			final String responseString = GSON.toJson(EntityUtils.toDto(entity));
 			response.getWriter().write(responseString);
 			return HttpServletResponse.SC_CREATED;
