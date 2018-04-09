@@ -1,16 +1,36 @@
 <html>
-
-<head>
-<title>SimpleRoseWeb</title>
-</head>
-<body>
-<div id="header">
-	<button class=header data-type=Start>Start</button>
-	<button class=header data-type=Server>Server</button>
-	<button class=header data-type=Files>Files</button>
-</div>
-<div id="content"></div>
-<script type='text/javascript' src='https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js'></script>
-<script type="text/javascript" src='js/main.js'></script>
-</body>
+	<head>
+		<title>SimpleRoseWeb</title>
+		<meta charset="UTF-8" />
+	</head>
+	<body>
+		<div id="header">
+			<button class=header data-type=Start>Start</button>
+			<button class=header data-type=Server>Server</button>
+			<button class=header data-type=Files>Files</button>
+		</div>
+		<div id="content"></div>
+		<template id='template-table'>
+			<div>
+				<select class = 'pagesize'>
+					<option>5</option>
+					<option>10</option>
+					<option>20</option>
+					<option>50</option>
+					<option>All</option>
+				</select>
+				<button class='first'>|&lt;</button>
+				<button class='prev'>&lt;</button>
+				<input class='page' type='text' value=1 />
+				<button class='next'>&gt;</button>
+				<button class='last'>&gt;|</button>
+				<table>
+					<tr class='header' />
+				</table>
+			</div>
+		</template>
+		<script type='text/javascript' src='https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js'></script>
+		<script type="text/javascript" src='js/ajax.js'></script>
+		<script type="text/javascript" src='js/main.js'></script>
+	</body>
 </html>

@@ -4,27 +4,6 @@ var entityModels = {};
 var $content;
 var $header;
 
-function getEntities(name,callback,id) {
-	var url = '../entity/' + name;
-	var data = {};
-	if(id) {
-		if(Array.isArray(id))
-			data.id=id.toString();
-		else
-			url+='/'+id;
-	}
-	$.ajax({
-		type:'GET',
-		url:url,
-		data:data,
-		success: e => {
-			var entity = JSON.parse(e);
-			callback(entity);
-		},
-		error:console.error
-	});
-};
-
 function showContent(contentType,id) {
 	$content.hide();
 	var shower = window['show'+contentType];
@@ -55,10 +34,10 @@ function showFiles() {
 
 function showEntityList(name) {
 	$content.html('<h1>'+name+'</h1>');
-	getEntities(name,entities => {
+	getEntityIds(name,entities => {
 		appendEntityTable($content,name,entities);
 		$content.find('h1').append(' #'+entities.length);
-		$content.slideDown(2500);
+		$content.slideDown(500);
 	});
 };
 
@@ -69,30 +48,78 @@ function showEntity(name,id) {
 		$.each(entityModels[name].fields, (i,f) => {
 			$ul.append('<li>'+f.name+': '+entity[f.name]+'</li>');
 		});
-		$content.slideDown(2500);
+		$content.slideDown(500);
 	},id);
 };
 
-function appendEntityTable($parent,entityName,entities) {
+function appendEntityTable($parent,entityName,ids) {
 	var model = entityModels[entityName];
-	$table = $parent.append('<table/>').last();
-	$tableheader = $table.append('<tr/>').last();
+	
+	$div=$parent.append($('#template-table').html()).find('div').last();
+	$table = $div.find('table');
+	$tablebody = $table.find('tbody');
+	$pagesize = $div.find('.pagesize');
+	$page = $div.find('.page');
+	
+	function pageSize() {
+		var pageSize = $pagesize.val();
+		return (pageSize === 'All') ? ids.length : pageSize;
+	};
+	
+	function maxPage() {
+		return Math.floor( (ids.length - 1) / pageSize() + 1 );
+	};
+	
+	function navigate(clazz,event,transform) {
+		$div.find('.'+clazz).on(event, e=> {
+			var page = parseInt($page.val());
+			if(transform)
+				page = transform(page);
+			if(page) {
+				page = Math.max(1,Math.min(page,maxPage()));
+				$page.val(page);
+				showEntities();
+			}
+		});
+	};
+
+	navigate('page','change');
+	navigate('pagesize','change');
+	navigate('first','click',v => 1);
+	navigate('prev','click',v => v-1);
+	navigate('next','click',v => v+1);
+	navigate('last','click',v => maxPage());
+
+	$tableheader = $table.find('.header');
 	$tableheader.append('<th>id</th>');
 	$.each(model.fields,(i,f) => {
 		$tableheader.append('<th>'+f.name+'</th>');
 	});
-	$.each(entities, (i,entity) => {
-		$row=$table.append('<tr/>').last();
-		$row.append('<td class=entity data-entity='+entityName+' data-id='+entity.id+' >'+entity.id+'</td>');
-		$.each(model.fields,(j,f) => {
-			$row.append('<td>'+displayValue(entity[f.name])+'</td>');
-		});
-	});
+	
+	function showEntities() {
+		$tablebody.find('.row-data').remove();
+		var page = $page.val();
+		var pagesize = pageSize();
+		var first = (page-1)*pagesize;
+		var last = page*pagesize;
+		var requestIds = ids.slice(first,last);
+		getEntities(entityName, entities => {
+			$.each(entities, (i,entity) => {
+				$row=$tablebody.append('<tr class=row-data/>').find('tr').last();
+				$row.append('<td class=entity data-entity='+entityName+' data-id='+entity.id+' >'+entity.id+'</td>');
+				$.each(model.fields,(j,f) => {
+					$row.append('<td>'+displayValue(entity[f.name])+'</td>');
+				});
+			});
+		},requestIds);
+	};
+	
+	showEntities();
 };
 
 function displayValue(value) {
 	return Array.isArray(value) ? '#'+value.length : value;
-}
+};
 
 $(function(){
 	
@@ -112,20 +139,11 @@ $(function(){
 			showContent(type);
 	});
 	
-	// request models
-	$.ajax({
-		type:'GET',
-		url:'../server/models',
-		success: e => {
-			var models = JSON.parse(e);
+	getModels( models => {
 			$.each(models,(i,m) => {
 				entityNames[i]=m.name;
 				entityModels[m.name]=m;
 			});
 			showStart();
-		},
-		error: e => {
-			alert('Error recieving entity models',e);
-		}
 	});
 });
