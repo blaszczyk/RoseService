@@ -1,12 +1,14 @@
 
-function getEntities(name,callback,id) {
+function getEntities(name,callback,query) {
 	var url = '../entity/' + name;
 	var data = {};
-	if(id) {
-		if(Array.isArray(id))
-			data.id=id.toString();
+	if(query) {
+		if(Array.isArray(query))
+			data.id=query.toString();
+		else if(Number.isInteger(query))
+			url+='/'+query;
 		else
-			url+='/'+id;
+			data = query;
 	}
 	$.ajax({
 		type:'GET',
@@ -29,6 +31,17 @@ function getEntityIds(name,callback) {
 			var entities = JSON.parse(e);
 			callback(entities);
 		},
+		error:console.error
+	});
+};
+
+function getEntityCount(name,callback,query) {
+	var url = '../entity/' + name + '/count';
+	$.ajax({
+		type:'GET',
+		url:url,
+		data:query,
+		success: callback,
 		error:console.error
 	});
 };

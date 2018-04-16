@@ -6,6 +6,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -23,11 +25,7 @@ import bn.blaszczyk.rose.model.EntityModel;
 import bn.blaszczyk.rose.model.Field;
 import bn.blaszczyk.rose.model.Writable;
 import bn.blaszczyk.rose.model.Readable;
-import bn.blaszczyk.rose.model.Representable;
 import bn.blaszczyk.rosecommon.controller.ModelController;
-import bn.blaszczyk.rosecommon.proxy.EntityAccess;
-import bn.blaszczyk.rosecommon.proxy.EntityAccessAdapter;
-import bn.blaszczyk.rosecommon.proxy.RoseProxy;
 import bn.blaszczyk.rosecommon.tools.EntityUtils;
 import bn.blaszczyk.rosecommon.tools.TypeManager;
 
@@ -74,7 +72,8 @@ public class EntityEndpoint implements Endpoint {
 					switch (pathOptions.getOptions()[0])
 					{
 					case "count":
-						responseString = Integer.toString(controller.getEntityCount(type));
+						final Map<String, String> query = transformQuery(request);
+						responseString = Integer.toString(controller.getEntityCount(type,query));
 						break;
 					case "id":
 						final List<Integer> ids = controller.getIds(type);
@@ -94,10 +93,13 @@ public class EntityEndpoint implements Endpoint {
 					final String[] queryId = request.getParameterMap().get("id");
 					final List<Dto> dtos;
 					if(queryId == null)
-						dtos = controller.getEntities(type)
+					{
+						final Map<String, String> query = transformQuery(request);
+						dtos = controller.getEntities(type,query)
 							.stream()
 							.map(EntityUtils::toDtoSilent)
 							.collect(Collectors.toList());
+					}
 					else
 					{
 						final List<Integer> ids = parseIds(queryId);
@@ -262,6 +264,15 @@ public class EntityEndpoint implements Endpoint {
 			entity.addEntity(index, subEntity);
 			controller.update(subEntity);
 		}
+	}
+
+	private Map<String, String> transformQuery(final HttpServletRequest request)
+	{
+		final Map<String,String> query = request.getParameterMap().entrySet().stream()
+				.collect(Collectors.toMap(Entry::getKey, e -> 
+					Arrays.stream(e.getValue()).collect(Collectors.joining(","))
+				));
+		return query;
 	}
 
 	private static List<Integer> parseIds(final String[] parameterValues)

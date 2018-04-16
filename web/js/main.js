@@ -34,11 +34,8 @@ function showFiles() {
 
 function showEntityList(name) {
 	$content.html('<h1>'+name+'</h1>');
-	getEntityIds(name,entities => {
-		appendEntityTable($content,name,entities);
-		$content.find('h1').append(' #'+entities.length);
-		$content.slideDown(500);
-	});
+	appendEntityTable($content,name);
+	$content.slideDown(500);
 };
 
 function showEntity(name,id) {
@@ -52,7 +49,7 @@ function showEntity(name,id) {
 	},id);
 };
 
-function appendEntityTable($parent,entityName,ids) {
+function appendEntityTable($parent,entityName,query) {
 	var model = entityModels[entityName];
 	
 	$div=$parent.append($('#template-table').html()).find('div').last();
@@ -60,14 +57,16 @@ function appendEntityTable($parent,entityName,ids) {
 	$tablebody = $table.find('tbody');
 	$pagesize = $div.find('.pagesize');
 	$page = $div.find('.page');
+
+	var count = 0;
 	
 	function pageSize() {
 		var pageSize = $pagesize.val();
-		return (pageSize === 'All') ? ids.length : pageSize;
+		return (pageSize === 'All') ? count : pageSize;
 	};
 	
 	function maxPage() {
-		return Math.floor( (ids.length - 1) / pageSize() + 1 );
+		return Math.floor( (count - 1) / pageSize() + 1 );
 	};
 	
 	function navigate(clazz,event,transform) {
@@ -102,7 +101,7 @@ function appendEntityTable($parent,entityName,ids) {
 		var pagesize = pageSize();
 		var first = (page-1)*pagesize;
 		var last = page*pagesize;
-		var requestIds = ids.slice(first,last);
+		var paginatedQuery = Object.assign({firstResult:first,maxResults:pagesize},query);
 		getEntities(entityName, entities => {
 			$.each(entities, (i,entity) => {
 				$row=$tablebody.append('<tr class=row-data/>').find('tr').last();
@@ -111,10 +110,13 @@ function appendEntityTable($parent,entityName,ids) {
 					$row.append('<td>'+displayValue(entity[f.name])+'</td>');
 				});
 			});
-		},requestIds);
+		},paginatedQuery);
 	};
-	
-	showEntities();
+
+	getEntityCount(entityName,c => {
+		count = c;
+		showEntities();
+	},query);
 };
 
 function displayValue(value) {
