@@ -280,7 +280,7 @@ public class HtmlTools {
 			final String fieldName = field.getName();
 			final String defValue;
 			if(field.getType().isSecondMany())
-				defValue = Arrays.stream(dto.getEntityIds(fieldName)).mapToObj(String::valueOf).collect(Collectors.joining(","));
+				defValue = Arrays.stream(dto.getEntityIds(fieldName)).map(String::valueOf).collect(Collectors.joining(","));
 			else
 				defValue = String.valueOf(dto.getEntityId(fieldName));
 			sb.append("<tr><td>")

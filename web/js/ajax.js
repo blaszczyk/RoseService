@@ -5,11 +5,13 @@ function getEntities(name,callback,query) {
 	if(query) {
 		if(Array.isArray(query))
 			data.id=query.toString();
-		else if(Number.isInteger(query))
+		else if(Number.isInteger(query) || typeof query === 'string')
 			url+='/'+query;
 		else
 			data = query;
 	}
+	data.one='entity';
+	data.many='count';
 	$.ajax({
 		type:'GET',
 		url:url,

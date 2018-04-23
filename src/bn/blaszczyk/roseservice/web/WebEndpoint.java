@@ -7,6 +7,7 @@ import java.nio.file.StandardCopyOption;
 import java.text.ParseException;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -25,6 +26,7 @@ import bn.blaszczyk.rose.model.Field;
 import bn.blaszczyk.rose.model.PrimitiveField;
 import bn.blaszczyk.rose.model.Dto;
 import bn.blaszczyk.rose.model.DtoContainer;
+import bn.blaszczyk.rose.model.DtoLinkType;
 import bn.blaszczyk.rose.model.EntityField;
 import bn.blaszczyk.rosecommon.client.RoseClient;
 import bn.blaszczyk.rosecommon.client.ServiceConfigClient;
@@ -35,7 +37,15 @@ import bn.blaszczyk.rosecommon.tools.TypeManager;
 import bn.blaszczyk.roseservice.server.Endpoint;
 import bn.blaszczyk.roseservice.server.PathOptions;
 
-public class WebEndpoint implements Endpoint {
+public class WebEndpoint implements Endpoint
+{
+
+	private static final Map<String,String> DTO_LINK_QUERY = new HashMap<>(2);
+	static
+	{
+		DTO_LINK_QUERY.put("one", DtoLinkType.ID.name());
+		DTO_LINK_QUERY.put("many", DtoLinkType.ID.name());
+	}
 	
 	private final RoseClient client;
 	private final ServiceConfigClient serviceConfigClient;
@@ -163,7 +173,7 @@ public class WebEndpoint implements Endpoint {
 	
 	private String buildEntitiesList(final EntityModel entityModel) throws RoseException
 	{
-		final List<Dto> dtos = client.getDtos(entityModel.getObjectName(), TypeManager.getClass(entityModel));
+		final List<Dto> dtos = client.getDtos(TypeManager.getClass(entityModel), DTO_LINK_QUERY);
 		final DtoContainerRequest request = new DtoContainerRequest();
 		dtos.forEach(request::requestOwners);
 		final DtoContainer container = client.getContainer(request);
@@ -172,14 +182,14 @@ public class WebEndpoint implements Endpoint {
 
 	private String buildEntityEdit(final EntityModel entityModel, final int id) throws RoseException
 	{
-		final Dto dto = client.getDto(TypeManager.getClass(entityModel), id);
+		final Dto dto = client.getDto(TypeManager.getClass(entityModel), id, DTO_LINK_QUERY);
 		return HtmlTools.entityEdit(entityModel, dto);
 	}
 
 	private String buildEntityView(final EntityModel entityModel, final int id) throws RoseException
 	{
 		final Class<? extends Readable> type = TypeManager.getClass(entityModel);
-		final Dto dto = client.getDto(type, id);
+		final Dto dto = client.getDto(type, id, DTO_LINK_QUERY);
 
 		final DtoContainerRequest request = new DtoContainerRequest();
 		for(final EntityField field : entityModel.getEntityFields())
@@ -268,12 +278,12 @@ public class WebEndpoint implements Endpoint {
 		}
 	}
 
-	private int[] parseIds(final String stringValue)
+	private Integer[] parseIds(final String stringValue)
 	{
 		return Arrays.stream(stringValue.split("\\,"))
 				.filter(s -> !s.isEmpty())
-				.mapToInt(Integer::parseInt)
-				.toArray();
+				.map(Integer::parseInt)
+				.toArray(Integer[]::new);
 	}
 
 	private Object primitiveValue(final Field field, final String stringValue) throws RoseException

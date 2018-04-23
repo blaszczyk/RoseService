@@ -21,6 +21,7 @@ import com.google.gson.Gson;
 import bn.blaszczyk.rose.RoseException;
 import bn.blaszczyk.rose.model.Dto;
 import bn.blaszczyk.rose.model.DtoContainer;
+import bn.blaszczyk.rose.model.DtoLinkType;
 import bn.blaszczyk.rose.model.EntityModel;
 import bn.blaszczyk.rose.model.Field;
 import bn.blaszczyk.rose.model.Writable;
@@ -48,6 +49,8 @@ public class EntityEndpoint implements Endpoint {
 		try
 		{
 			final String responseString;
+			final DtoLinkType oneLinkType = getLinkType(request.getParameterMap().get("one"));
+			final DtoLinkType manyLinkType = getLinkType(request.getParameterMap().get("many"));
 			if(path == null || path.isEmpty())
 			{
 				final DtoContainer container = TypeManager.newDtoContainer();
@@ -57,7 +60,7 @@ public class EntityEndpoint implements Endpoint {
 					final List<Integer> ids = parseIds(request.getParameterValues(typeName));
 					controller.getEntitiesByIds(type, ids)
 						.stream()
-						.map(EntityUtils::toDtoSilent)
+						.map(e -> EntityUtils.toDto(e,oneLinkType,manyLinkType))
 						.forEach(container::put);
 				}
 				responseString = GSON.toJson(container);
@@ -85,7 +88,7 @@ public class EntityEndpoint implements Endpoint {
 				else if(pathOptions.hasId())
 				{
 					final Readable entity = controller.getEntityById(type, pathOptions.getId());
-					final Dto dto = EntityUtils.toDto(entity);
+					final Dto dto = EntityUtils.toDto(entity,oneLinkType,manyLinkType);
 					responseString = GSON.toJson(dto);
 				}
 				else
@@ -97,7 +100,7 @@ public class EntityEndpoint implements Endpoint {
 						final Map<String, String> query = transformQuery(request);
 						dtos = controller.getEntities(type,query)
 							.stream()
-							.map(EntityUtils::toDtoSilent)
+							.map(e -> EntityUtils.toDto(e,oneLinkType,manyLinkType))
 							.collect(Collectors.toList());
 					}
 					else
@@ -105,7 +108,7 @@ public class EntityEndpoint implements Endpoint {
 						final List<Integer> ids = parseIds(queryId);
 						dtos = controller.getEntitiesByIds(type, ids)
 							.stream()
-							.map(EntityUtils::toDtoSilent)
+							.map(e -> EntityUtils.toDto(e,oneLinkType,manyLinkType))
 							.collect(Collectors.toList());
 					}
 					responseString = GSON.toJson(dtos);
@@ -244,11 +247,11 @@ public class EntityEndpoint implements Endpoint {
 		}
 	}
 
-	private void updateMany(final Writable entity, final int index, final int[] entityIds) throws RoseException
+	private void updateMany(final Writable entity, final int index, final Integer[] entityIds) throws RoseException
 	{
 		if(entityIds == null)
 			return;
-		final Set<Integer> ids = Arrays.stream(entityIds).mapToObj(Integer::new).collect(Collectors.toSet());
+		final Set<Integer> ids = Arrays.stream(entityIds).collect(Collectors.toSet());
 		final Set<? extends Readable> subEntities = new HashSet<>(entity.getEntityValueMany(index));
 		for(final Readable subEntity : subEntities)
 			if(ids.contains(subEntity.getId()))
@@ -287,6 +290,14 @@ public class EntityEndpoint implements Endpoint {
 			.filter(s -> !s.isEmpty())
 			.map(Integer::parseInt)
 			.collect(Collectors.toList());
+	}
+
+	private static DtoLinkType getLinkType(final String[] parameterValues)
+	{
+		if(parameterValues == null || parameterValues.length == 0)
+			return DtoLinkType.NONE;
+		final DtoLinkType type = DtoLinkType.valueOf(parameterValues[0].toUpperCase());
+		return type != null ? type : DtoLinkType.NONE;
 	}
 
 }

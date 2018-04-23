@@ -107,7 +107,7 @@ function appendEntityTable($parent,entityName,query) {
 				$row=$tablebody.append('<tr class=row-data/>').find('tr').last();
 				$row.append('<td class=entity data-entity='+entityName+' data-id='+entity.id+' >'+entity.id+'</td>');
 				$.each(model.fields,(j,f) => {
-					$row.append('<td>'+displayValue(entity[f.name])+'</td>');
+					$row.append('<td>'+displayValue(entity,f)+'</td>');
 				});
 			});
 		},paginatedQuery);
@@ -119,8 +119,15 @@ function appendEntityTable($parent,entityName,query) {
 	},query);
 };
 
-function displayValue(value) {
-	return Array.isArray(value) ? '#'+value.length : value;
+function displayValue(entity,field) {
+	var value;
+	if(field.fieldType.endsWith('TOONE'))
+		value=JSON.stringify(entity[field.name]);
+	else if(field.fieldType.endsWith('TOMANY'))
+		value=entity[field.name+'_count'];
+	else
+		var value=entity[field.name];
+	return value;
 };
 
 $(function(){
