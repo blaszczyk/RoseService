@@ -143,7 +143,7 @@ public class EntityEndpoint implements Endpoint {
 //			final Writable entity = RoseProxy.create(dto, new EntityAccessAdapter(controller));
 //			controller.createNew(entity);
 						
-			final String responseString = GSON.toJson(EntityUtils.toDto(entity));
+			final String responseString = GSON.toJson(EntityUtils.toDto(entity,DtoLinkType.ID, DtoLinkType.ID));
 			response.getWriter().write(responseString);
 			return HttpServletResponse.SC_CREATED;
 		}
@@ -232,13 +232,13 @@ public class EntityEndpoint implements Endpoint {
 	private void updateOne(final Writable entity, final int index, final Integer entityId) throws RoseException
 	{
 		final Writable oldEntity = (Writable) entity.getEntityValueOne(index);
-		if( oldEntity == null || oldEntity.getId() != entityId)
+		final Writable newEntity;
+		if(entityId == null || entityId.intValue() < 0)
+			newEntity = null;
+		else
+			newEntity = (Writable) controller.getEntityById(entity.getEntityClass(index), entityId);
+		if( oldEntity == null || !oldEntity.equals(newEntity))
 		{
-			final Writable newEntity;
-			if(entityId < 0)
-				newEntity = null;
-			else
-				newEntity = (Writable) controller.getEntityById(entity.getEntityClass(index), entityId);
 			entity.setEntity(index, newEntity);
 			if(oldEntity != null)
 				controller.update(oldEntity);

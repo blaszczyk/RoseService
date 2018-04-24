@@ -1,5 +1,6 @@
+$.ajaxSettings.error=console.log;
 
-function getEntities(name,callback,query) {
+function getEntities(name,query,callback) {
 	var url = '../entity/' + name;
 	var data = {};
 	if(query) {
@@ -18,9 +19,14 @@ function getEntities(name,callback,query) {
 		data:data,
 		success: e => {
 			var entities = JSON.parse(e);
+			if(Array.isArray(entities))
+				$.each(entities,(i,entity) => {
+					entity.entityName=name;
+				});
+			else
+				entities.entityName=name;
 			callback(entities);
-		},
-		error:console.error
+		}
 	});
 };
 
@@ -30,14 +36,13 @@ function getEntityIds(name,callback) {
 		type:'GET',
 		url:url,
 		success: e => {
-			var entities = JSON.parse(e);
-			callback(entities);
-		},
-		error:console.error
+			var ids = JSON.parse(e);
+			callback(ids);
+		}
 	});
 };
 
-function getEntityCount(name,callback,query) {
+function getEntityCount(name,query,callback) {
 	var url = '../entity/' + name + '/count';
 	$.ajax({
 		type:'GET',
@@ -48,39 +53,36 @@ function getEntityCount(name,callback,query) {
 	});
 };
 
-function postEntity(name,entity,callback) {
-	var url = '../entity/' + name;
+function postEntity(entity,callback) {
+	var url = '../entity/' + entity.entityName;
 	$.ajax({
 		type:'POST',
 		url:url,
 		data:entity,
 		success: e => {
 			var entity = JSON.parse(e);
-			callback(entity);
-		},
-		error:console.error
+			e.entityName=entity.entityName;
+			callback(e);
+		}
 	});
 };
 
-function putEntity(name,entity,callback) {
-	var url = '../entity/' + name + '/' + entity.id;
+function putEntity(entity,callback) {
+	var url = '../entity/' + entity.entityName + '/' + entity.id;
 	$.ajax({
 		type:'PUT',
 		url:url,
 		data:entity,
-		success: callback,
-		error:console.error
+		success: callback
 	});
 };
 
-function deleteEntity(name,id,callback) {
-	var url = '../entity/' + name + '/' + id;
+function deleteEntity(entity,callback) {
+	var url = '../entity/' + entity.entityName + '/' + entity.id;
 	$.ajax({
 		type:'DELETE',
 		url:url,
-		data:entity,
-		success: callback,
-		error:console.error
+		success: callback
 	});
 };
 
@@ -91,9 +93,6 @@ function getModels(callback) {
 		success: e => {
 			var models = JSON.parse(e);
 			callback(models);
-		},
-		error: e => {
-			console.error('Error recieving entity models',e);
 		}
 	});
 };
