@@ -34,29 +34,42 @@ function showFiles() {
 
 function showEntityList(name) {
 	$content.html('<h1>'+name+'</h1>');
-	appendEntityTable($content,name);
+	appendEntityTable($content,name, {}, c => {
+		$content.find('h1').append(' #='+c);
+	});
 	$content.slideDown(500);
 };
 
 function showEntity(name,id) {
 	$content.html('<h1>'+name+' '+id+'</h1><ul/>');
-	$ul=$content.find('ul');
+	var $ul=$content.find('ul');
 	getEntities(name,id,entity => {
 		$.each(entityModels[name].fields, (i,f) => {
-			$ul.append('<li>'+f.name+': '+displayValue(entity,f)+'</li>');
+			if(f.fieldType.endsWith('TOMANY')) {
+				var $h2 = $content.append('<h2>'+f.name+'</h2>').find('h2').last();
+				var query={};
+				query[f.counterName]=id;
+				appendEntityTable($content,f.entity,query, c => {
+					$h2.append(' #='+c);
+				});
+			}
+			else {
+				var data = f.entity && entity[f.name] ? ' class=entity data-entity='+f.entity+' data-id='+entity[f.name].id+' ' : '';
+				$ul.append('<li'+data+'>'+f.name+': '+displayValue(entity,f)+'</li>');
+			}
 		});
 		$content.slideDown(500);
 	});
 };
 
-function appendEntityTable($parent,entityName,query) {
+function appendEntityTable($parent,entityName,query,callback) {
 	var model = entityModels[entityName];
 	
-	$div=$parent.append($('#template-table').html()).find('div').last();
-	$table = $div.find('table');
-	$tablebody = $table.find('tbody');
-	$pagesize = $div.find('.pagesize');
-	$page = $div.find('.page');
+	var $div=$parent.append($('#template-table').html()).find('div').last();
+	var $table = $div.find('table');
+	var $tablebody = $table.find('tbody');
+	var $pagesize = $div.find('.pagesize');
+	var $page = $div.find('.page');
 
 	var count = 0;
 	
@@ -89,7 +102,7 @@ function appendEntityTable($parent,entityName,query) {
 	navigate('next','click',v => v+1);
 	navigate('last','click',v => maxPage());
 
-	$tableheader = $table.find('.header');
+	var $tableheader = $table.find('.header');
 	$tableheader.append('<th>id</th>');
 	$.each(model.fields,(i,f) => {
 		$tableheader.append('<th>'+f.name+'</th>');
@@ -115,7 +128,12 @@ function appendEntityTable($parent,entityName,query) {
 
 	getEntityCount(entityName,query,c => {
 		count = c;
-		showEntities();
+		if(c>0)
+			showEntities();
+		else
+			$div.hide();
+		if(callback)
+			callback(c);
 	});
 };
 
@@ -162,14 +180,14 @@ $(function(){
 			showContent(entityName,id);
 	});
 	
-	$content.delegate('tr.entity','mouseover', e => {
-		$tr = $(e.target).closest('tr');
-		$tr.css('background','#cccccc');
+	$content.delegate('tr.entity, li.entity','mouseover', e => {
+		$this = $(e.target).closest('.entity');
+		$this.css('background','#cccccc');
 	});
 	
-	$content.delegate('tr.entity','mouseout', e => {
-		$tr = $(e.target).closest('tr');
-		$tr.css('background','#ffffff');
+	$content.delegate('tr.entity, li.entity','mouseout', e => {
+		$this = $(e.target).closest('.entity');
+		$this.css('background','#ffffff');
 	});
 	
 	getModels( models => {
